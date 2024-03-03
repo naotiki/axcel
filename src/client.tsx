@@ -1,15 +1,16 @@
-import { Button, MantineProvider } from "@mantine/core";
+import { MantineProvider } from "@mantine/core";
 import { createRoot } from "react-dom/client";
-import '@mantine/core/styles.css';
-import '@mantine/dates/styles.css';
+import "@mantine/core/styles.css";
+import "@mantine/dates/styles.css";
+import { Top } from "./front/pages/Top";
+import { Layout } from "./front/layouts/DefaultLayout";
 function App() {
 	return (
 		<>
 			<MantineProvider>
-				<h1>Hello, Hono with React!</h1>
-				<h2>Example of useState()</h2>
-				<h2>Example of API fstch()</h2>
-                <Button variant="filled">Button</Button>
+				<Layout>
+					<Top />
+				</Layout>
 			</MantineProvider>
 		</>
 	);

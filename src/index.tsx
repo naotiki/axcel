@@ -1,15 +1,12 @@
 import { Hono } from "hono";
 import { renderToString } from "react-dom/server";
+import api from "./api/index";
 
 const app = new Hono();
 
-app.get('/api/clock', (c) => {
-  return c.json({
-    time: new Date().toLocaleTimeString()
-  })
-})
+app.route("/api", api);
 
-app.get("*", (c) => {
+app.get("/", (c) => {
 	return c.html(
 		renderToString(
 			<html lang="ja">
@@ -25,9 +22,8 @@ app.get("*", (c) => {
 				<body>
 					<div id="root" />
 				</body>
-			</html>
+			</html>,
 		),
 	);
 });
-
 export default app;

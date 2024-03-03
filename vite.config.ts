@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => {
 		};
 	}
 	return {
+		server: {
+			port: 3000,
+		},
 		ssr: {
 			external: ["react", "react-dom"],
 		},

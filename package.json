@@ -1,28 +1,30 @@
 {
   "type": "module",
-	"scripts": {
-    "dev":"vite",
-		"__dev": "bun run --hot src/index.ts"
-	},
-	"dependencies": {
-		"@mantine/core": "^7.6.1",
-		"@mantine/dates": "^7.6.1",
-		"@mantine/form": "^7.6.1",
-		"@mantine/hooks": "^7.6.1",
-		"dayjs": "^1.11.10",
-		"hono": "^4.0.8",
-		"react": "^18.2.0",
-    "react-dom": "^18.2.0"
-	},
-	"devDependencies": {
+  "scripts": {
+    "dev": "vite",
+    "__dev": "bun run --hot src/index.ts"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.1.11",
+    "@mantine/core": "^7.6.1",
+    "@mantine/dates": "^7.6.1",
+    "@mantine/form": "^7.6.1",
+    "@mantine/hooks": "^7.6.1",
+    "dayjs": "^1.11.10",
+    "hono": "^4.0.8",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
     "@hono/vite-dev-server": "^0.8.0",
-		"@biomejs/biome": "1.5.3",
-		"@types/bun": "latest",
-		"@types/react": "^18.2.61",
+    "@biomejs/biome": "1.5.3",
+    "@types/bun": "latest",
+    "@types/react": "^18.2.61",
     "@types/react-dom": "^18.2.19",
     "vite": "^5.0.12",
-		"postcss": "^8.4.35",
-		"postcss-preset-mantine": "^1.13.0",
-		"postcss-simple-vars": "^7.0.1"
-	}
+    "postcss": "^8.4.35",
+    "postcss-preset-mantine": "^1.13.0",
+    "postcss-simple-vars": "^7.0.1"
+  }
 }
