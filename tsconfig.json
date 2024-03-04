@@ -1,5 +1,8 @@
 {
-
+  "exclude": [
+    "dist",
+    "postcss.config.cjs"
+  ],
   "compilerOptions": {
     "strict": true,
     "target": "ESNext",
