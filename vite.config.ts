@@ -21,6 +21,9 @@ export default defineConfig(({ mode }) => {
 		ssr: {
 			external: ["react", "react-dom"],
 		},
+		build:{
+			emptyOutDir:false
+		},
 		plugins: [
 			devServer({
 				entry: "src/index.tsx",

@@ -1,0 +1,202 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+generator jsonSchema {
+  provider = "prisma-json-schema-generator"
+}
+generator zod {
+  provider       = "zod-prisma-types"
+}
+// generator client {
+//   provider        = "prisma-client-js"
+//   previewFeatures = ["fullTextSearch"]
+// }
+
+model Project {
+  id           Int            @id @default(autoincrement())
+  title        String         @db.VarChar(255)
+  status       Status?
+  category     Category?      @relation(fields: [categoryId], references: [id])
+  categoryId   Int
+  label        Label?         @relation(fields: [labelId], references: [id])
+  labelId      Int?
+  location     Location[]
+  description  String
+  alias        String         @db.VarChar(255) @unique
+  visible      Boolean
+  imagePath    String?
+  group        Group          @relation(fields: [groupId], references: [id])
+  groupId      Int
+  notification Notification[]
+  createdAt    DateTime       @default(now())
+  modifiedAt   DateTime       @updatedAt
+}
+
+enum Status {
+  OK
+  Limited
+  Suspended
+}
+
+model Category {
+  id      Int       @id @default(autoincrement())
+  name    String    @db.VarChar(255)
+  prefix  String    @unique @db.VarChar(7)
+  project Project[]
+}
+
+model Label {
+  id      Int       @id @default(autoincrement())
+  name    String    @db.VarChar(255)
+  project Project[]
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(255)
+  location    Location @relation(fields: [locationId], references: [id])
+  locationId  Int
+  description String?
+  group       Group    @relation(fields: [groupId], references: [id])
+  groupId     Int
+  startAt     DateTime
+  finishAt    DateTime
+  visible     Boolean
+  createdAt   DateTime @default(now())
+  modifiedAt  DateTime @updatedAt
+}
+
+model Group {
+  id      Int       @id @default(autoincrement())
+  name    String    @db.VarChar(255)
+  project Project[]
+  event   Event[]
+  contact String    @db.VarChar(255)
+  members Member[]
+}
+
+model Member {
+  id          String   @id @default(uuid()) @db.Uuid
+  email       String   @unique @db.VarChar(255)
+  alias       String   @db.VarChar(255)
+  displayName String   @db.VarChar(255)
+  group       Group[]
+  role        Role     @default(Member)
+  createdAt   DateTime @default(now())
+  modifiedAt  DateTime @updatedAt
+  user        User?
+}
+
+enum Role {
+  Member
+  Admin
+}
+
+model Location {
+  id       Int       @id @default(autoincrement())
+  floor    Floor     @relation(fields: [floorId], references: [id])
+  floorId  Int
+  x        Float
+  y        Float
+  roomName String    @db.VarChar(255)
+  project  Project[]
+  event    Event[]
+}
+
+model Floor {
+  id         Int        @id @default(autoincrement())
+  imagePath  String     @unique
+  building   Building   @relation(fields: [buildingId], references: [id])
+  buildingId Int
+  location   Location[]
+}
+
+model Building {
+  id       Int     @id @default(autoincrement())
+  title    String  @unique @db.VarChar(255)
+  pathName String  @unique @db.VarChar(255)
+  floor    Floor[]
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  project   Project  @relation(fields: [projectId], references: [id])
+  projectId Int
+  title     String   @db.VarChar(255)
+  body      String   @db.VarChar(255)
+  createdAt DateTime @default(now())
+}
+
+// For Next Auth
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  ext_expires_in    Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  member        Member    @relation(fields: [email], references: [email])
+  password      String?
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model BusDeparture {
+  id             Int            @id @default(autoincrement())
+  direction      BusDirection
+  schoolBusStop  SchoolBusStop
+  stationBusStop StationBusStop
+  leaveTime      Int
+  arriveTime     Int
+}
+
+enum SchoolBusStop {
+  Front
+  Rear
+}
+
+enum StationBusStop {
+  East
+  West
+}
+
+enum BusDirection {
+  Station
+  School
+}

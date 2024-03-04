@@ -1,4 +1,5 @@
 {
+
   "compilerOptions": {
     "strict": true,
     "target": "ESNext",
@@ -10,7 +11,8 @@
       "DOM.Iterable"
     ],
     "types": [
-      "vite/client"
+      "vite/client",
+      "bun-types"
     ],
     "jsx": "react-jsx",
     "jsxImportSource": "react"
