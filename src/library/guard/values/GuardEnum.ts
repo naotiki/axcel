@@ -10,7 +10,11 @@ export class GuardEnum<T extends string> extends GuardValue<T> {
 		this.name = name;
 		this.enumValues = enumValues;
 	}
-
+	_enumLabels:Partial<Record<T, string>>={};
+	enumLabels(labels: Record<T, string>) {
+		this._enumLabels=labels;
+		return this;
+	}
 	override defValidate(err:string[]) {
 		if (this.enumValues.length === 0) {
 			err.push("enumValues size must be larger than zero");

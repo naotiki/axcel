@@ -8,34 +8,32 @@ export enum PrismaType {
 	Int = "Int",
 	BigInt = "BigInt",
 	Float = "Float",
-	Decimal = 		"Decimal",
+	Decimal = "Decimal",
 	DateTime = "DateTime",
 	Enum = "Enum",
 	List = "List",
 }
 
-/*type SaferType<P extends PrismaType> = {
-	prismaType: P;
-};*/
-
-//type SaferString = SaferType<PrismaType.String>;
-
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export type GuardValueAny = GuardValue<any>;
 export type GuardField = GuardValueAny | GuardRelation<string> | GuardRelationList<string>;
 export class GuardRelation<T extends string> {
-	model: GuardModel<T>;
+	model: GuardModel<T, { [A in T]: GuardField }>;
 	fields: Record<string, GuardValueAny>;
 	relations: T[];
-	constructor(model: GuardModel<T>, fields: Record<string, GuardValueAny>, relations: T[]) {
+	constructor(
+		model: GuardModel<T, { [A in T]: GuardField }>,
+		fields: Record<string, GuardValueAny>,
+		relations: T[],
+	) {
 		this.model = model;
 		this.fields = fields;
 		this.relations = relations;
 	}
 }
 export class GuardRelationList<T extends string> {
-	model: GuardModel<T>;
-	constructor(model: GuardModel<T>) {
+	model: GuardModel<T, { [A in T]: GuardField }>;
+	constructor(model: GuardModel<T, { [A in T]: GuardField }>) {
 		this.model = model;
 	}
 }

@@ -76,11 +76,11 @@ export class GuardGenerator {
 
 			// Search references to this model
 			for (const m of this.models) {
-				if(model===m)continue;//同じのは除外
+				if (model === m) continue; //同じのは除外
 				for (const k in m.modelSchema) {
 					const f = m.modelSchema[k];
-					if ((f instanceof GuardRelation||f instanceof GuardRelationList)&&f.model === model) {
-						w.write(`\t${m.name.toLowerCase()}    ${m.name}[]\n`)
+					if ((f instanceof GuardRelation || f instanceof GuardRelationList) && f.model === model) {
+						w.write(`\t${m.name.toLowerCase()}    ${m.name}[]\n`);
 					}
 				}
 			}
@@ -92,7 +92,7 @@ export class GuardGenerator {
 		} //loop end model
 		w.end();
 	}
-	models: GuardModel<string>[];
+	models: GuardModel<string,{ [A in string]: GuardField }>[];
 	constructor() {
 		this.models = [];
 	}
@@ -120,13 +120,13 @@ export class GuardGenerator {
 	enum<S extends string, T extends [S, ...S[]]>(enumName: string, enumValues: T): GuardEnum<T[number]> {
 		return new GuardEnum<T[number]>(enumName, enumValues);
 	}
-	relation<T extends string>(model: GuardModel<T>, fields: Record<string, GuardValueAny>, relations: T[]) {
+	relation<T extends string>(model: GuardModel<T,{ [A in T]: GuardField }>, fields: Record<string, GuardValueAny>, relations: T[]) {
 		return new GuardRelation(model, fields, relations);
 	}
-	relationList<T extends string>(model: GuardModel<T>) {
+	relationList<T extends string>(model: GuardModel<T,{ [A in T]: GuardField }>) {
 		return new GuardRelationList(model);
 	}
-	model<T extends string>(modelName: string, schema: Record<T, GuardField>) {
+	model<T extends string,S extends {[A in T]:GuardField}>(modelName: string, schema:S) {
 		const gm = new GuardModel(modelName, schema);
 		this.models.push(gm);
 		return gm;

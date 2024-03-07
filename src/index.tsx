@@ -6,6 +6,8 @@ const app = new Hono();
 
 app.route("/api", api);
 
+
+
 app.get("/", (c) => {
 	return c.html(
 		renderToString(
@@ -16,8 +18,11 @@ app.get("/", (c) => {
 					{import.meta.env.PROD ? (
 						<script type="module" src="/static/client.js" />
 					) : (
-						<script type="module" src="/src/client.tsx" />
+						<>
+							<script type="module" src="/src/client.tsx" />
+						</>
 					)}
+					<title>No Excel!!</title>
 				</head>
 				<body>
 					<div id="root" />

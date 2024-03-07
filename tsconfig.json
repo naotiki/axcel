@@ -1,8 +1,9 @@
 {
   "exclude": [
     "dist",
-    "postcss.config.cjs"
+    "__postcss.config.cjs"
   ],
+  "include": ["src"],
   "compilerOptions": {
     "strict": true,
     "target": "ESNext",
@@ -18,6 +19,6 @@
       "bun-types"
     ],
     "jsx": "react-jsx",
-    "jsxImportSource": "react"
+    "jsxImportSource": "@emotion/react",
   }
 }

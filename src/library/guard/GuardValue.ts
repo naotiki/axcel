@@ -1,4 +1,10 @@
+import { any } from "zod";
 import { DefaultValue, PrismaType } from "./guard";
+
+export type GuardValueAnotations = {
+	label?: string;
+	description?:string;
+};
 
 export abstract class GuardValue<T> {
 	prismaType: PrismaType;
@@ -6,7 +12,10 @@ export abstract class GuardValue<T> {
 	_id?: boolean;
 	_unique?: boolean;
 	_optional?: boolean;
+	_readonly?: boolean;
 	_label?: string;
+
+	attrs:GuardValueAnotations={};
 	protected constructor(pt: PrismaType) {
 		this.prismaType = pt;
 	}
@@ -22,16 +31,29 @@ export abstract class GuardValue<T> {
 		this._unique = true;
 		return this;
 	}
-
+	clientReadonly() {
+		this._readonly = true;
+		return this;
+	}
 	optional() {
 		this._optional = true;
 		return this;
 	}
 
 	label(label: string) {
-		this._label = label;
+		this.attrs.label = label;
 		return this;
 	}
+	desc(description: string) {
+		this.attrs.description = description;
+		return this;
+	}
+	anotate(annotations: GuardValueAnotations) {
+		this.attrs = annotations;
+		return this;
+	}
+
+
 
 	parse(value: T): T {
 		//TODO

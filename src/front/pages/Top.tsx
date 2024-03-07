@@ -1,9 +1,9 @@
-import {Container, Table} from "@mantine/core";
+import { Center, Container, Table } from "@mantine/core";
 import { useEffect } from "react";
 import { z } from "zod";
-import {Row, TableProvider} from "../components/Table/TableProvider";
-import {TableHeader} from "../components/Table/TableHeader";
-import {CellText} from "../components/Table/CellText";
+import { Row, TableProvider } from "../components/Table/TableProvider";
+import { TableHeader } from "../components/Table/TableHeader";
+import { CellText } from "../components/Table/CellText";
 
 const schemes: Row[] = [
 	{
@@ -30,21 +30,11 @@ const schemes: Row[] = [
 export function Top() {
 	useEffect(() => {}, []);
 	return (
-		<Container size="md" pt={5}>
-			<TableProvider rows={schemes}>
-				<TableHeader/>
-				<Table.Tbody>
-					<Table.Tr>
-						<Table.Td>
-							a
-						</Table.Td>
-						<CellText zod={z.string()} />
-						<CellText zod={z.string()} />
-						<CellText zod={z.string()} />
-						<CellText zod={z.string().email()} />
-					</Table.Tr>
-				</Table.Tbody>
-			</TableProvider>
-		</Container>
+		<>
+			<Container size="md" pt={5} />
+			<Center>
+				<TableProvider rows={schemes} />
+			</Center>
+		</>
 	);
 }

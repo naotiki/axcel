@@ -1,10 +1,16 @@
 import { GuardValue } from "../GuardValue";
 import { PrismaType } from "../guard";
 
+type RegExpFilter={
+	regex:RegExp;
+	regexName?:string;
+	hint?:string
+}
+
 export class GuardString extends GuardValue<string> {
 	minLength?: number;
 	maxLength?: number;
-	_regex?: RegExp;
+	_regex?: RegExpFilter;
 	min(min: number) {
 		this.minLength = min;
 		return this;
@@ -24,11 +30,23 @@ export class GuardString extends GuardValue<string> {
 		return this;
 	}
 	email() {
-		this._regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+		this._regex = {
+			regex:/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
+			regexName:"メールアドレス",
+		};
 		return this;
 	}
-	regex(r: RegExp) {
-		this._regex = r;
+	regex(r: RegExp | RegExpFilter) {
+		if (r instanceof RegExp) {
+			this._regex = {regex:r};
+			
+		}else{
+			this._regex = r;
+		}
+		return this;
+	}
+	namedRegex(r:RegExp,name:string){
+		this._regex = {regex:r,regexName:name};
 		return this;
 	}
 	constructor() {

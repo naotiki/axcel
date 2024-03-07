@@ -1,5 +1,6 @@
 import { autoIncrement, now } from "../guard/ValueProviders";
 import { GuardGenerator } from "../guard/GuardGenerator";
+import { GuardInfer } from "../guard/GuardModel";
 const g= new GuardGenerator();
 const category = g.model("Category", {
 	id: g.int().id().default(autoIncrement),
@@ -35,7 +36,8 @@ const member = g.model("Member", {
   updatedAt: g.dateTime().updatedAt(),
 });
 
-const project = g.model("Project", {
+
+export const project = g.model("Project", {
 	id: g.int().id().default(autoIncrement),
 	title: g.string(),
 	status: g.enum("Status", ["Ok", "Limited", "Suspended"]).optional(),
@@ -83,4 +85,4 @@ generator client {
 }
 `);
 
-g.generate(Bun.file("./prisma/gen.prisma"));
+export default g;

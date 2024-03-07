@@ -1,4 +1,5 @@
 import devServer from "@hono/vite-dev-server";
+import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 export default defineConfig(({ mode }) => {
@@ -15,18 +16,18 @@ export default defineConfig(({ mode }) => {
 		};
 	}
 	return {
-		server: {
-			port: 3000,
-		},
 		ssr: {
 			external: ["react", "react-dom"],
 		},
-		build:{
-			emptyOutDir:false
+		server: {
+			port: 3000,
+		},
+		build: {
+			emptyOutDir: false,
 		},
 		plugins: [
 			devServer({
-				entry: "src/index.tsx",
+				entry: "./src/index.tsx",
 			}),
 		],
 	};

@@ -1,10 +1,18 @@
 import { Row } from "../components/Table/TableProvider";
 
+export type CellLocation={
+	row: number;
+	column: number;
+}
+
 export class TableManager {
-	rows: Row[];
-	constructor(rows: Row[]) {
-		this.rows = rows;
+	editing?: CellLocation;
+	setEditing(value?: CellLocation) {
+		this.editing = value;
 	}
 
-	setEditing(value: boolean) {}
+
+
+}
+class RowManager {
 }
