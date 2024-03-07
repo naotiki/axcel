@@ -3,7 +3,7 @@ import { GuardBool } from "./values/GuardBool";
 import { GuardDecimal, GuardFloat, GuardInt } from "./values/GuardNumbers";
 import { GuardEnum } from "./values/GuardEnum";
 import { GuardDateTime } from "./values/GuardDateTime";
-import { GuardModel } from "./GuardModel";
+import { GuardModel, GuardSchema } from "./GuardModel";
 import { GuardList } from "./values/GuardList";
 import { GuardValue } from "./GuardValue";
 import { BunFile } from "bun";
@@ -120,14 +120,14 @@ export class GuardGenerator {
 	enum<S extends string, T extends [S, ...S[]]>(enumName: string, enumValues: T): GuardEnum<T[number]> {
 		return new GuardEnum<T[number]>(enumName, enumValues);
 	}
-	relation<T extends string>(model: GuardModel<T,{ [A in T]: GuardField }>, fields: Record<string, GuardValueAny>, relations: T[]) {
+	relation<T extends string,S extends GuardSchema<T>>(model: GuardModel<T,S>, fields: Record<string, GuardValueAny>, relations: T[]) {
 		return new GuardRelation(model, fields, relations);
 	}
-	relationList<T extends string>(model: GuardModel<T,{ [A in T]: GuardField }>) {
+	relationList<T extends string,S extends GuardSchema<T>>(model: GuardModel<T,S>) {
 		return new GuardRelationList(model);
 	}
-	model<T extends string,S extends {[A in T]:GuardField}>(modelName: string, schema:S) {
-		const gm = new GuardModel(modelName, schema);
+	model<T extends string,S extends GuardSchema<T>>(modelName: string, schema:S) {
+		const gm = new GuardModel<T,S>(modelName, schema);
 		this.models.push(gm);
 		return gm;
 	}

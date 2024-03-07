@@ -1,5 +1,5 @@
 import { DefaultValueProvider } from "./ValueProviders";
-import { GuardModel } from "./GuardModel";
+import { GuardModel, GuardSchema } from "./GuardModel";
 import { GuardValue } from "./GuardValue";
 
 export enum PrismaType {
@@ -16,13 +16,13 @@ export enum PrismaType {
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export type GuardValueAny = GuardValue<any>;
-export type GuardField = GuardValueAny | GuardRelation<string> | GuardRelationList<string>;
-export class GuardRelation<T extends string> {
-	model: GuardModel<T, { [A in T]: GuardField }>;
+export type GuardField = GuardValueAny | GuardRelation<string,GuardSchema<string>> | GuardRelationList<string,GuardSchema<string>>;
+export class GuardRelation<T extends string,S extends GuardSchema<T>> {
+	model: GuardModel<T, S>;
 	fields: Record<string, GuardValueAny>;
 	relations: T[];
 	constructor(
-		model: GuardModel<T, { [A in T]: GuardField }>,
+		model: GuardModel<T, S>,
 		fields: Record<string, GuardValueAny>,
 		relations: T[],
 	) {
@@ -31,9 +31,9 @@ export class GuardRelation<T extends string> {
 		this.relations = relations;
 	}
 }
-export class GuardRelationList<T extends string> {
-	model: GuardModel<T, { [A in T]: GuardField }>;
-	constructor(model: GuardModel<T, { [A in T]: GuardField }>) {
+export class GuardRelationList<T extends string,S extends GuardSchema<T>> {
+	model: GuardModel<T, S>;
+	constructor(model: GuardModel<T, S>) {
 		this.model = model;
 	}
 }

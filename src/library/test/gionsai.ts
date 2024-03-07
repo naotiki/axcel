@@ -1,6 +1,6 @@
 import { autoIncrement, now } from "../guard/ValueProviders";
 import { GuardGenerator } from "../guard/GuardGenerator";
-import { GuardInfer } from "../guard/GuardModel";
+import { GuardModelInfer } from "../guard/GuardModel";
 const g= new GuardGenerator();
 const category = g.model("Category", {
 	id: g.int().id().default(autoIncrement),
@@ -35,7 +35,6 @@ const member = g.model("Member", {
   createdAt: g.dateTime().default(now),
   updatedAt: g.dateTime().updatedAt(),
 });
-
 
 export const project = g.model("Project", {
 	id: g.int().id().default(autoIncrement),
