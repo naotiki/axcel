@@ -12,7 +12,7 @@ import { DefaultValueProvider } from "./ValueProviders";
 
 export class GuardGenerator {
 	headerContent?: string;
-	header(content: string) {
+	prismaHeader(content: string) {
 		this.headerContent = content;
 	}
 	generate(to: BunFile) {
@@ -96,7 +96,7 @@ export class GuardGenerator {
 	constructor() {
 		this.models = [];
 	}
-	list<T extends GuardValue<E>, E>(field: T) {
+	list<T extends GuardValue<E>, E extends {}>(field: T) {
 		return new GuardList<T, E>(field);
 	}
 	string() {

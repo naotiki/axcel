@@ -5,7 +5,7 @@ export function Header() {
 		<header>
 			<Container size="md" py={20}>
 				<Flex gap={10} align={"center"}>
-					<Title order={1}> No Excel!</Title>
+					<Title order={1}> Axcel</Title>
           <Space style={{flexGrow:1}}/>
 					<Button>ログイン</Button>
 				</Flex>

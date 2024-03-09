@@ -1,7 +1,6 @@
-import { GuardValue } from "./GuardValue";
+import { label } from "../test/gionsai";
+import { GuardHasDefault, GuardOptional, GuardValue } from "./GuardValue";
 import { GuardField, GuardRelation, GuardRelationList } from "./guard";
-
-
 
 export class GuardModel<T extends string, S extends GuardSchema<T>> {
 	name: string;
@@ -23,7 +22,7 @@ export class GuardModel<T extends string, S extends GuardSchema<T>> {
 		}
 	}
 	//完全識別用IDを付与
-	injectId(value: GuardModelInfer<GuardModel<T, S>>) {
+	injectId(value: GuardModelOutput<GuardModel<T, S>>) {
 		return {
 			_id: Object.entries(this.modelSchema)
 				.filter(([k, v]) => v instanceof GuardValue && v._id)
@@ -34,12 +33,12 @@ export class GuardModel<T extends string, S extends GuardSchema<T>> {
 			},
 		};
 	}
-	injectIdList(values: GuardModelInfer<GuardModel<T, S>>[]) {
+	injectIdList(values: GuardModelOutput<GuardModel<T, S>>[]) {
 		return values.map((v) => this.injectId(v));
 	}
 }
 
-export type GuardSchema<T extends string> = { [A in T]: GuardField };
+export type GuardSchema<T extends string> = { [_ in T]: GuardField };
 
 export type GuardModelColumn<T extends GuardModel<string, GuardSchema<string>>> = T extends GuardModel<
 	string,
@@ -48,19 +47,43 @@ export type GuardModelColumn<T extends GuardModel<string, GuardSchema<string>>> 
 	? keyof S
 	: never;
 
-export type GuardModelInfer<T extends GuardModel<string, GuardSchema<string>>> = T extends GuardModel<
+export type GuardModelOutput<T extends GuardModel<string, GuardSchema<string>>> = T extends GuardModel<
 	string,
 	infer S
 >
-	? GuardSchemaInfer<S>
+	? GuardSchemaOutput<S>
+	: never;
+export type GuardModelInput<T extends GuardModel<string, GuardSchema<string>>> = T extends GuardModel<
+	string,
+	infer S
+>
+	? GuardSchemaInput<S>
 	: never;
 
 export type GuardRelationRef<S extends GuardSchema<string>> = {
 	_id: string;
-	value: GuardSchemaInfer<S>;
+	value: GuardSchemaOutput<S>;
 };
 
-type GuardSchemaInfer<S extends GuardSchema<string>> = { [K in keyof S]: GuardFieldInfer<S[K]> };
+type GuardSchemaOutput<S extends GuardSchema<string>> = {
+	[K in OptionalGuardFields<S>]?: GuardFieldInfer<S[K]>;
+} & {
+	[K in Exclude<keyof S, OptionalGuardFields<S>>]: GuardFieldInfer<S[K]>;
+};
+
+type GuardSchemaInput<S extends GuardSchema<string>> = {
+	[K in OptionalGuardFields<S> | HasDefaultGuardFields<S>]?: GuardFieldInfer<S[K]>;
+} & {
+	[K in Exclude<keyof S, OptionalGuardFields<S> | HasDefaultGuardFields<S>>]: GuardFieldInfer<S[K]>;
+};
+
+type OptionalGuardFields<S extends GuardSchema<string>> = {
+	[K in keyof S]: S[K] extends GuardOptional ? K : never;
+}[keyof S];
+
+type HasDefaultGuardFields<S extends GuardSchema<string>> = {
+	[K in keyof S]: S[K] extends GuardHasDefault<unknown> ? K : never;
+}[keyof S];
 
 export type GuardFieldInfer<T extends GuardField> = T extends GuardValue<infer I>
 	? I
@@ -69,4 +92,3 @@ export type GuardFieldInfer<T extends GuardField> = T extends GuardValue<infer I
 	  : T extends GuardRelationList<string, infer S>
 		  ? GuardRelationRef<S>[]
 		  : never;
-

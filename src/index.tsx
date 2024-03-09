@@ -22,7 +22,7 @@ app.get("/", (c) => {
 							<script type="module" src="/src/client.tsx" />
 						</>
 					)}
-					<title>No Excel!!</title>
+					<title>Axcel</title>
 				</head>
 				<body>
 					<div id="root" />

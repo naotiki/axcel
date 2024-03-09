@@ -1,6 +1,6 @@
 import { never } from "zod";
 import { GuardGenerator } from "../../../library/guard/GuardGenerator";
-import { GuardModelInfer, GuardModel, GuardModelColumn, GuardSchema } from "../../../library/guard/GuardModel";
+import { GuardModelOutput, GuardModel, GuardModelColumn, GuardSchema } from "../../../library/guard/GuardModel";
 import { autoIncrement } from "../../../library/guard/ValueProviders";
 
 const g = new GuardGenerator();
@@ -9,6 +9,9 @@ export type AbsoluteCellPosition<T extends GuardModel<string, GuardSchema<string
 	id: string;
 	column: GuardModelColumn<T> | S;
 };
+
+
+
 export const mockModel = g.model("Movie", {
 	id: g.int().id().default(autoIncrement).label("ID").clientReadonly(),
 	title: g.string().label("タイトル"),
@@ -19,7 +22,7 @@ export const mockModel = g.model("Movie", {
 	}),
 	category: g.string().label("カテゴリー"),
 });
-export type MockModel = GuardModelInfer<typeof mockModel>;
+export type MockModel = GuardModelOutput<typeof mockModel>;
 export const mockDatas: MockModel[] = [
 	{
 		id: 1,
@@ -162,4 +165,23 @@ export const language = g.model("Language", {
 		["id"],
 	),
 	funny: g.bool().anotate({ label: "楽しい", description: '関数宣言が"fun"かどうか' }),
+});
+
+
+export const mockModel2 = g.model("Movie", {
+	id: g.int().id().default(autoIncrement).label("ID").clientReadonly(),
+	title: g.string().label("タイトル"),
+	status: g.enum("Status", ["Ok", "Limited", "Suspended"]).label("ステータス").enumLabels({
+		Ok: "公開",
+		Limited: "限定",
+		Suspended: "停止",
+	}),
+	category: g.string().label("カテゴリー"),
+	language: g.relation(
+		language,
+		{
+			languageId: g.int(),
+		},
+		["id"],
+	),
 });

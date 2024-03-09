@@ -1,9 +1,9 @@
-import { any } from "zod";
+import { any, z } from "zod";
 import { DefaultValue, PrismaType } from "./guard";
 
 export type GuardValueAnotations = {
 	label?: string;
-	description?:string;
+	description?: string;
 };
 
 export abstract class GuardValue<T> {
@@ -11,17 +11,15 @@ export abstract class GuardValue<T> {
 	_default?: DefaultValue<GuardValue<T>>;
 	_id?: boolean;
 	_unique?: boolean;
-	_optional?: boolean;
 	_readonly?: boolean;
-	_label?: string;
-
-	attrs:GuardValueAnotations={};
+	_optional?: boolean;
+	attrs: GuardValueAnotations = {};
 	protected constructor(pt: PrismaType) {
 		this.prismaType = pt;
 	}
 	default<D extends GuardValue<T>>(v: DefaultValue<D>) {
 		this._default = v;
-		return this;
+		return this as this & GuardHasDefault<T>;
 	}
 	id() {
 		this._id = true;
@@ -37,7 +35,7 @@ export abstract class GuardValue<T> {
 	}
 	optional() {
 		this._optional = true;
-		return this;
+		return this as this & GuardOptional;
 	}
 
 	label(label: string) {
@@ -52,8 +50,6 @@ export abstract class GuardValue<T> {
 		this.attrs = annotations;
 		return this;
 	}
-
-
 
 	parse(value: T): T {
 		//TODO
@@ -71,3 +67,6 @@ export abstract class GuardValue<T> {
 	}
 	abstract defValidate(errorlist: string[]): void;
 }
+
+export type GuardOptional = { _optional: true };
+export type GuardHasDefault<T> = { _default:  DefaultValue<GuardValue<T>> };

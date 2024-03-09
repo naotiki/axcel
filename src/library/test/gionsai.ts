@@ -1,6 +1,7 @@
 import { autoIncrement, now } from "../guard/ValueProviders";
 import { GuardGenerator } from "../guard/GuardGenerator";
-import { GuardModelInfer } from "../guard/GuardModel";
+import { GuardModelInput, GuardModelOutput } from "../guard/GuardModel";
+import { z } from "zod";
 const g= new GuardGenerator();
 const category = g.model("Category", {
 	id: g.int().id().default(autoIncrement),
@@ -8,7 +9,7 @@ const category = g.model("Category", {
 	prefix: g.string().unique(),
 });
 
-const label = g.model("Label", {
+export const label = g.model("Label", {
 	id: g.int().id().default(autoIncrement),
 	name: g.string(),
 });
@@ -72,16 +73,19 @@ export const project = g.model("Project", {
 	createdAt: g.dateTime().default(now),
 	updatedAt: g.dateTime().updatedAt(),
 });
+type A =GuardModelInput<typeof label>
+const a:A={
+	name:"Label",
+};
 
-g.header(`
+g.prismaHeader(`
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 generator client {
 	provider        = "prisma-client-js"
-	previewFeatures = ["fullTextSearch"]
 }
 `);
-
+z.number().int
 export default g;
