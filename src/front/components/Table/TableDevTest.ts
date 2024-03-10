@@ -19,7 +19,7 @@ export const mockModel = g.model("Movie", {
 		Ok: "公開",
 		Limited: "限定",
 		Suspended: "停止",
-	}),
+	}).clientReadonly(),
 	category: g.string().label("カテゴリー"),
 	check: g.bool().label("チェック").optional(),
 	number: g.int().label("数値").optional(),

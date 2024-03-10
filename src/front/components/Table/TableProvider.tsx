@@ -159,7 +159,7 @@ export function TableProvider(props: TableProviderProps) {
 										if (field._readonly) {
 											return (
 												<td className={readOnlyCell} key={key}>
-													{value?.toString() ?? "Invalid"}
+													<GuardFieldDisplay field={field} value={value?.toString()} />
 												</td>
 											);
 										}
