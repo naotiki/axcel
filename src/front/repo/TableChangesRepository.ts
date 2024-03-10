@@ -18,7 +18,7 @@ export type Changes<T extends GuardModel<string, GuardSchema<string>>> = {
 	deletions: string[];
 	changes: { [key: string]: { new: Y.Text }} ;
 	addtions: { [key: string]: { [K in keyof GuardModelInput<T>]: Y.Text }};
-	getYTextOrNull(location: AbsoluteCellPosition<T>): Y.Text | undefined;
+	getYTextOrNull(location: AbsoluteCellPosition<T>): Y.Text | null;
 };
 
 export class TableChangesRepository<T extends GuardModel<string, GuardSchema<string>>>  {
@@ -63,10 +63,10 @@ export class TableChangesRepository<T extends GuardModel<string, GuardSchema<str
 		this.deletions.push([id]);
 	}
 
-	getYTextOrNull(location: AbsoluteCellPosition<T>): Y.Text | undefined {
+	getYTextOrNull(location: AbsoluteCellPosition<T>): Y.Text | null {
 		return (
 			this.changes.get(this.genCellId(location))?.get("new") ??
-			this.addtions.get(location.id)?.get(location.column)
+			this.addtions.get(location.id)?.get(location.column) ?? null
 		);
 	}
 
@@ -79,7 +79,7 @@ export class TableChangesRepository<T extends GuardModel<string, GuardSchema<str
       deletions: this.deletions.toArray(),
       changes: this.changes.toJSON(),
       addtions: this.addtions.toJSON(),
-      getYTextOrNull(location: AbsoluteCellPosition<T>): Y.Text | undefined {
+      getYTextOrNull(location: AbsoluteCellPosition<T>): Y.Text | null {
         return (
           this.changes[`${location.id}+${location.column ?? ""}`]?.new ??
           this.addtions[location.id]?.[location.column]

@@ -14,7 +14,7 @@ export type AbsoluteCellPosition<T extends GuardModel<string, GuardSchema<string
 
 export const mockModel = g.model("Movie", {
 	id: g.int().id().default(autoIncrement).label("ID").clientReadonly(),
-	title: g.string().label("タイトル"),
+	title: g.string().label("タイトル").min(1),
 	status: g.enum("Status", ["Ok", "Limited", "Suspended"]).label("ステータス").enumLabels({
 		Ok: "公開",
 		Limited: "限定",

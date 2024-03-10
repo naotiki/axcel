@@ -1,8 +1,13 @@
-import { GuardValue } from "../GuardValue";
+import { GuardValue ,GuardHasDefault} from "../GuardValue";
 import {PrismaType} from "../guard";
 
 
 export class GuardDateTime extends GuardValue<Date> {
+    validator(value: string): string[] | undefined {
+        if(Number.isNaN(Date.parse(value))){
+            return ["日時が不正です。"]
+        }
+    }
     _updatedAt?:boolean;
     isDateOnly?:boolean;
     constructor() {
@@ -14,7 +19,7 @@ export class GuardDateTime extends GuardValue<Date> {
     }
     updatedAt(){
         this._updatedAt = true;
-        return this;
+        return this as this & GuardHasDefault<Date>;
     }
     override defValidate(_err:string[]) {
         return;

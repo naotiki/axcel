@@ -8,6 +8,19 @@ type RegExpFilter={
 }
 
 export class GuardString extends GuardValue<string> {
+	validator(value: string): string[] | undefined {	
+		const err: string[] = [];
+		if (this.minLength && value.length < this.minLength) {
+			err.push(`文字数が${this.minLength}文字未満です。`);
+		}
+		if (this.maxLength && value.length > this.maxLength) {
+			err.push(`文字数が${this.maxLength}文字を超えています。`);
+		}
+		if (this._regex && !this._regex.regex.test(value)) {
+			err.push(`${this._regex.regexName}の形式が正しくありません。${this._regex.hint ?? ""}`);
+		}
+		return err.length > 0 ? err : undefined;
+	}
 	minLength?: number;
 	maxLength?: number;
 	_regex?: RegExpFilter;

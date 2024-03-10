@@ -51,11 +51,13 @@ export abstract class GuardValue<T> {
 		return this;
 	}
 
-	parse(value: T): T {
+	validate(value: string): string[] | undefined {
 		//TODO
-		throw new Error("Todo");
+		const err = this.validator(value);
+		return err;
 		//return value;
 	}
+	abstract validator(value:string):string[] | undefined;
 
 	checkDef(): string[] | null {
 		const err: string[] = [];

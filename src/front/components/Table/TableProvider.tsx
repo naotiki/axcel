@@ -3,9 +3,19 @@ import { TableManager } from "../../model/TableManager";
 import { ZodTypeAny } from "zod";
 import { css } from "@emotion/css";
 import * as Diff from "diff";
-import { Avatar, Badge, Indicator, NativeSelect, Text, TextInput, Tooltip } from "@mantine/core";
+import {
+	Avatar,
+	Badge,
+	Box,
+	Indicator,
+	NativeSelect,
+	Popover,
+	Text,
+	TextInput,
+	Tooltip,
+} from "@mantine/core";
 import { AbsoluteCellPosition, mockDatas, mockModel } from "./TableDevTest";
-import { useClickOutside, useResizeObserver } from "@mantine/hooks";
+import { useClickOutside, useFocusTrap, useResizeObserver } from "@mantine/hooks";
 import { GuardField } from "../../../library/guard/guard";
 import { GuardEnum } from "../../../library/guard/values/GuardEnum";
 import * as Y from "yjs";
@@ -13,6 +23,7 @@ import { WebsocketProvider } from "y-websocket";
 import { getRandomName, User, UserRepository } from "../../repo/UserRepository";
 import { getRandomColor } from "../../utils/Color";
 import { Changes, TableChangesRepository } from "../../repo/TableChangesRepository";
+import { GuardValue } from "../../../library/guard/GuardValue";
 const TableContext = createContext<TableManager | null>(null);
 //Wrapper
 export function useTable() {
@@ -28,7 +39,7 @@ const header = css({
 });
 
 const cell = css({
-	padding: "0.25em",
+	//padding: "0.25em",
 	width: "8em",
 	maxWidth: "8em",
 	border: "1px solid #bbbbbb",
@@ -39,6 +50,9 @@ const readOnlyCell = css(cell, {
 const dataCell = css(cell, {
 	overflow: "visible",
 	backgroundColor: "#ffffff",
+});
+const changedCell = css(dataCell, {
+	backgroundColor: "#ffffbb",
 });
 const focusedDataCell = css(dataCell, {
 	//backgroundColor: "#bbbbff88",
@@ -82,7 +96,6 @@ export function TableProvider(props: TableProviderProps) {
 
 		tableChangesRepo.current = new TableChangesRepository<typeof mockModel>(doc);
 		tableChangesRepo.current.onChanges((type) => {
-			console.log(type);
 			if (tableChangesRepo.current !== null) {
 				setChanges(tableChangesRepo.current.getState());
 			}
@@ -144,6 +157,7 @@ export function TableProvider(props: TableProviderProps) {
 										}
 										return (
 											<TableDataCell
+												changed={(changes?.getYTextOrNull(loc)??null) !== null}
 												loc={loc}
 												key={key}
 												field={field}
@@ -164,14 +178,13 @@ export function TableProvider(props: TableProviderProps) {
 													});
 												}}
 												onValueChanged={(v, old) => {
-													const yText = tableChangesRepo.current?.getYTextOrNull(loc);
-													if (yText === undefined) {
+													const yText = tableChangesRepo.current?.getYTextOrNull(loc)??null;
+													if (yText === null) {
 														tableChangesRepo.current?.addChange(loc, {
 															new: new Y.Text(v),
 														});
 														return;
 													}
-													console.dir(yText);
 													let count = 0;
 													for (const part of Diff.diffChars(old, v)) {
 														if (part.added) {
@@ -199,6 +212,7 @@ type TableDataCellProps = {
 	value: string;
 	field: GuardField;
 	loc: CellLocation;
+	changed: boolean;
 	selected?: boolean;
 	selectingUsers: {
 		name: string;
@@ -212,27 +226,13 @@ function TableDataCell(props: TableDataCellProps) {
 	const displayTest =
 		props.field instanceof GuardEnum ? props.field._enumLabels[props.value] ?? props.value : props.value;
 	const [editing, setEditing] = useState(false);
-	if (editing) {
-		return (
-			<td className={focusedDataCell}>
-				<GuardFieldInput
-					field={props.field}
-					value={props.value}
-					onValueChange={(s) => {
-						props.onValueChanged?.(s, props.value);
-					}}
-					onBlur={() => {
-						setEditing(false);
-					}}
-				/>
-			</td>
-		);
-	}
+
 	return (
 		// biome-ignore lint/a11y/useKeyWithClickEvents: ハッカソンでアクセシビリティは後回し
 		<td
-			className={props.selected ? focusedDataCell : dataCell}
+			className={`${editing ? focusedDataCell : props.selected ? focusedDataCell : dataCell} ${props.changed ? changedCell : ""}`}
 			onClick={() => {
+				if (editing) return;
 				if (props.selected) {
 					setEditing(true);
 				} else {
@@ -241,8 +241,26 @@ function TableDataCell(props: TableDataCellProps) {
 			}}
 		>
 			<EditingBadges users={props.selectingUsers} />
-
-			<Text>{displayTest}</Text>
+			<ErrorMaker
+				opened={props.selected === true}
+				errors={props.field instanceof GuardValue ? props.field.validate(props.value) : undefined}
+			/>
+			<div className={css({ padding: "0.25em" })}>
+				{editing ? (
+					<GuardFieldInput
+						field={props.field}
+						value={props.value}
+						onValueChange={(s) => {
+							props.onValueChanged?.(s, props.value);
+						}}
+						onBlur={() => {
+							setEditing(false);
+						}}
+					/>
+				) : (
+					<Text style={{ overflow: "clip", textWrap: "nowrap" }}>{displayTest}</Text>
+				)}
+			</div>
 		</td>
 	);
 }
@@ -275,8 +293,7 @@ function EditingBadges(props: EditingBadgesProps) {
 						key={`${u.name}-${i}`}
 						className={css({
 							position: "absolute",
-							right: `${(-0.25 + i * 0.25).toString()}rem`,
-							top: "-0.25rem",
+							right: `${(i * 0.25).toString()}rem`,
 							width: "0.5rem",
 							height: "0.5rem",
 							background: u.color,
@@ -319,5 +336,48 @@ function GuardFieldInput({ field, value, ...props }: GuardFieldInputProps) {
 			onChange={(e) => props.onValueChange(e.currentTarget.value)}
 			ref={ref}
 		/>
+	);
+}
+
+type ErrorMakerProps = {
+	errors?: string[];
+	opened: boolean;
+};
+function ErrorMaker({ errors, opened }: ErrorMakerProps) {
+	if (errors?.length === 0 || !errors) return <></>;
+	return (
+		<div
+			className={css({
+				position: "relative",
+			})}
+		>
+			<Popover opened={opened} position="top" withArrow arrowSize={12}>
+				<Popover.Target>
+					<div
+						className={css({
+							position: "absolute",
+							top: 0,
+							width: "0.5rem",
+							height: "0.5rem",
+							borderTop: "0.5rem solid red",
+							borderRight: "0.5rem solid transparent",
+						})}
+					/>
+				</Popover.Target>
+				<Popover.Dropdown>
+					<Box
+						style={{
+							maxHeight: "2rem",
+							overflowY: "scroll",
+							scrollbarWidth: "none",
+						}}
+					>
+						{errors.map((e) => (
+							<Text key={e}>{e}</Text>
+						))}
+					</Box>
+				</Popover.Dropdown>
+			</Popover>
+		</div>
 	);
 }
