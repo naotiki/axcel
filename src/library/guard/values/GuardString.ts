@@ -17,7 +17,7 @@ export class GuardString extends GuardValue<string> {
 			err.push(`文字数が${this.maxLength}文字を超えています。`);
 		}
 		if (this._regex && !this._regex.regex.test(value)) {
-			err.push(`${this._regex.regexName}の形式が正しくありません。${this._regex.hint ?? ""}`);
+			err.push(`${this._regex.regexName??"値"}の形式が正しくありません。${this._regex.hint ?? ""}`);
 		}
 		return err.length > 0 ? err : undefined;
 	}

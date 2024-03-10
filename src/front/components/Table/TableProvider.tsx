@@ -7,13 +7,17 @@ import {
 	Avatar,
 	Badge,
 	Box,
+	Center,
+	Checkbox,
 	Indicator,
 	NativeSelect,
+	NumberInput,
 	Popover,
 	Text,
 	TextInput,
 	Tooltip,
 } from "@mantine/core";
+import { DatePickerInput, DateTimePicker } from "@mantine/dates";
 import { AbsoluteCellPosition, mockDatas, mockModel } from "./TableDevTest";
 import { useClickOutside, useFocusTrap, useResizeObserver } from "@mantine/hooks";
 import { GuardField } from "../../../library/guard/guard";
@@ -24,6 +28,9 @@ import { getRandomName, User, UserRepository } from "../../repo/UserRepository";
 import { getRandomColor } from "../../utils/Color";
 import { Changes, TableChangesRepository } from "../../repo/TableChangesRepository";
 import { GuardValue } from "../../../library/guard/GuardValue";
+import { GuardBool } from "../../../library/guard/values/GuardBool";
+import { GuardDateTime } from "../../../library/guard/values/GuardDateTime";
+import { GuardInt, GuardNumbers } from "../../../library/guard/values/GuardNumbers";
 const TableContext = createContext<TableManager | null>(null);
 //Wrapper
 export function useTable() {
@@ -54,10 +61,11 @@ const dataCell = css(cell, {
 const changedCell = css(dataCell, {
 	backgroundColor: "#ffffbb",
 });
-const focusedDataCell = css(dataCell, {
-	//backgroundColor: "#bbbbff88",
-	outline: "2px solid #1111ff",
-});
+const focusedDataCell = (color: string) =>
+	css(dataCell, {
+		//backgroundColor: "#bbbbff88",
+		outline: `2px solid ${color}`,
+	});
 
 export type Row = {
 	name: string;
@@ -142,27 +150,31 @@ export function TableProvider(props: TableProviderProps) {
 						{data.map((o, i) => {
 							return (
 								<tr key={o._id}>
-									{Object.entries(o.data).map(([key, value], j) => {
+									{Object.entries(mockModel.modelSchema).map(([key, field], j) => {
 										const loc: CellLocation = {
 											id: o._id,
 											column: key as keyof typeof mockModel.modelSchema,
 										};
-										const field = mockModel.modelSchema[key as keyof typeof mockModel.modelSchema];
+										const value = o.data[key as keyof typeof mockModel.modelSchema];
 										if (field._readonly) {
 											return (
 												<td className={readOnlyCell} key={key}>
-													{value}
+													{value?.toString() ?? "Invalid"}
 												</td>
 											);
 										}
 										return (
 											<TableDataCell
-												changed={(changes?.getYTextOrNull(loc)??null) !== null}
+												changed={(changes?.getYTextOrNull(loc) ?? null) !== null}
 												loc={loc}
 												key={key}
 												field={field}
-												value={changes?.getYTextOrNull(loc)?.toString() ?? value.toString()}
-												selected={selectedCell?.id === loc.id && selectedCell?.column === loc.column}
+												value={changes?.getYTextOrNull(loc)?.toString() ?? value?.toString()}
+												selected={
+													selectedCell?.id === loc.id && selectedCell?.column === loc.column
+														? user?.user.color
+														: undefined
+												}
 												selectingUsers={users
 													.filter(
 														(u) =>
@@ -178,16 +190,16 @@ export function TableProvider(props: TableProviderProps) {
 													});
 												}}
 												onValueChanged={(v, old) => {
-													if(!field._isFreeEdit){
-														console.log("free");
-														if(tableChangesRepo.current?.update(loc,v) === null){
+													if (!field._isFreeEdit) {
+														console.log("not free", v);
+														if (tableChangesRepo.current?.update(loc, v) === null) {
 															tableChangesRepo.current?.addChange(loc, {
 																new: v,
 															});
 														}
 														return;
 													}
-													const yText = tableChangesRepo.current?.getYTextOrNull(loc)??null;
+													const yText = tableChangesRepo.current?.getYTextOrNull(loc) ?? null;
 													if (yText === null) {
 														tableChangesRepo.current?.addChange(loc, {
 															new: new Y.Text(v),
@@ -218,11 +230,11 @@ export function TableProvider(props: TableProviderProps) {
 }
 
 type TableDataCellProps = {
-	value: string;
+	value?: string;
 	field: GuardField;
 	loc: CellLocation;
 	changed: boolean;
-	selected?: boolean;
+	selected?: string;
 	selectingUsers: {
 		name: string;
 		color: string;
@@ -232,14 +244,18 @@ type TableDataCellProps = {
 };
 
 function TableDataCell(props: TableDataCellProps) {
-	const displayTest =
-		props.field instanceof GuardEnum ? props.field._enumLabels[props.value] ?? props.value : props.value;
 	const [editing, setEditing] = useState(false);
-
+	useEffect(() => {
+		if (!props.selected) {
+			setEditing(false);
+		}
+	}, [props.selected]);
 	return (
 		// biome-ignore lint/a11y/useKeyWithClickEvents: ハッカソンでアクセシビリティは後回し
 		<td
-			className={`${editing ? focusedDataCell : props.selected ? focusedDataCell : dataCell} ${props.changed ? changedCell : ""}`}
+			className={`${props.selected ? focusedDataCell(props.selected) : dataCell} ${
+				props.changed ? changedCell : ""
+			}`}
 			onClick={() => {
 				if (editing) return;
 				if (props.selected) {
@@ -250,24 +266,25 @@ function TableDataCell(props: TableDataCellProps) {
 			}}
 		>
 			<EditingBadges users={props.selectingUsers} />
-			<ErrorMaker
-				opened={props.selected === true}
-				errors={props.field instanceof GuardValue ? props.field.validate(props.value) : undefined}
-			/>
+			{props.value !== undefined ? (
+				<ErrorMaker
+					opened={!!props.selected}
+					errors={props.field instanceof GuardValue ? props.field.validate(props.value) : undefined}
+				/>
+			) : (
+				<></>
+			)}
 			<div className={css({ padding: "0.25em" })}>
 				{editing ? (
 					<GuardFieldInput
 						field={props.field}
-						value={props.value}
+						value={props.value ?? ""}
 						onValueChange={(s) => {
 							props.onValueChanged?.(s, props.value);
 						}}
-						onBlur={() => {
-							setEditing(false);
-						}}
 					/>
 				) : (
-					<Text style={{ overflow: "clip", textWrap: "nowrap" }}>{displayTest}</Text>
+					<GuardFieldDisplay field={props.field} value={props.value} />
 				)}
 			</div>
 		</td>
@@ -276,9 +293,8 @@ function TableDataCell(props: TableDataCellProps) {
 
 type GuardFieldInputProps = {
 	field: GuardField;
-	value: string;
+	value?: string;
 	onValueChange: (v: string) => void;
-	onBlur?: () => void;
 };
 
 type EditingBadgesProps = {
@@ -315,10 +331,26 @@ function EditingBadges(props: EditingBadgesProps) {
 	);
 }
 
+type GuardFieldDisplayProps = {
+	field: GuardField;
+	value?: string;
+};
+
+function GuardFieldDisplay({ field, value }: GuardFieldDisplayProps) {
+	if (value === undefined) return <Text c={"gray"}>{"< 空 >"}</Text>;
+	if (field instanceof GuardBool) {
+		return (
+			<Center>
+				<Checkbox checked={value.toLowerCase() === "true"} variant="outline" readOnly />
+			</Center>
+		);
+	}
+
+	const displayTest = field instanceof GuardEnum ? field._enumLabels[value] ?? value : value;
+	return <Text style={{ overflow: "clip", textWrap: "nowrap" }}>{displayTest}</Text>;
+}
+
 function GuardFieldInput({ field, value, ...props }: GuardFieldInputProps) {
-	const ref = useClickOutside(() => {
-		props.onBlur?.();
-	});
 	if (field instanceof GuardEnum) {
 		return (
 			<NativeSelect
@@ -332,10 +364,56 @@ function GuardFieldInput({ field, value, ...props }: GuardFieldInputProps) {
 				}))}
 				value={value}
 				onChange={(e) => props.onValueChange(e.currentTarget.value)}
-				ref={ref}
 			/>
 		);
 	}
+	if (field instanceof GuardBool) {
+		return (
+			<Center>
+				<Checkbox
+					checked={value?.toLowerCase() === "true"}
+					onChange={(e) => props.onValueChange(e.currentTarget.checked.toString())}
+				/>
+			</Center>
+		);
+	}
+	if (field instanceof GuardDateTime) {
+		if (field.isDateOnly) {
+			return (
+				<DatePickerInput
+					valueFormat="YYYY年MM月DD日"
+					autoFocus
+					value={value ? new Date(value) : null}
+					onChange={(d) => props.onValueChange(d?.toLocaleDateString() ?? "")}
+				/>
+			);
+		}
+		return (
+			<DateTimePicker
+				valueFormat="YYYY年MM月DD日 HH:MM"
+				autoFocus
+				value={value ? new Date(value) : null}
+				onChange={(d) => props.onValueChange(d?.toLocaleString() ?? "")}
+			/>
+		);
+	}
+
+	if (field instanceof GuardNumbers) {
+		return (
+			<NumberInput
+				autoFocus
+				size="100%"
+				rightSectionWidth={"auto"}
+				variant="unstyled"
+				value={value}
+				min={field.minValue}
+				max={field.maxValue}
+				allowDecimal={!(field instanceof GuardInt)}
+				onChange={(e) => props.onValueChange(e.toString())}
+			/>
+		);
+	}
+
 	return (
 		<TextInput
 			autoFocus
@@ -343,7 +421,6 @@ function GuardFieldInput({ field, value, ...props }: GuardFieldInputProps) {
 			variant="unstyled"
 			value={value}
 			onChange={(e) => props.onValueChange(e.currentTarget.value)}
-			ref={ref}
 		/>
 	);
 }

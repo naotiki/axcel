@@ -21,6 +21,10 @@ export const mockModel = g.model("Movie", {
 		Suspended: "停止",
 	}),
 	category: g.string().label("カテゴリー"),
+	check: g.bool().label("チェック").optional(),
+	number: g.int().label("数値").optional(),
+	date: g.dateTime().label("日付").optional().dateOnly(),
+	dateTime: g.dateTime().label("日時").optional(),
 });
 export type MockModel = GuardModelOutput<typeof mockModel>;
 export const mockDatas: MockModel[] = [
@@ -54,78 +58,7 @@ export const mockDatas: MockModel[] = [
 		status: "Ok",
 		category: "funniest",
 	},
-	{
-		id: 6,
-		title: "てすとすと6",
-		status: "Ok",
-		category: "funniest",
-	},
-	{
-		id: 7,
-		title: "てすとすと7",
-		status: "Ok",
-		category: "funniest",
-	},
-	{
-		id: 8,
-		title: "てすとすと8",
-		status: "Ok",
-		category: "funniest",
-	},
-	{
-		id: 9,
-		title: "てすとすと9",
-		status: "Ok",
-		category: "funniest",
-	},
-	{
-		id: 10,
-		title: "てすとすと10",
-		status: "Ok",
-		category: "funniest",
-	},
-	{
-		id: 11,
-		title: "てすとすと11",
-		status: "Ok",
-		category: "funniest",
-	},
-	{
-		id: 12,
-		title: "てすとすと12",
-		status: "Ok",
-		category: "funniest",
-	},
-	{
-		id: 13,
-		title: "てすとすと13",
-		status: "Ok",
-		category: "funniest",
-	},
-	{
-		id: 14,
-		title: "てすとすと14",
-		status: "Ok",
-		category: "funniest",
-	},
-	{
-		id: 15,
-		title: "てすとすと15",
-		status: "Ok",
-		category: "funniest",
-	},
-	{
-		id: 16,
-		title: "てすとすと16",
-		status: "Ok",
-		category: "funniest",
-	},
-	{
-		id: 17,
-		title: "てすとすと17",
-		status: "Suspended",
-		category: "funniest",
-	},
+
 ];
 
 export const creator = g.model("Creator", {

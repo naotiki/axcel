@@ -1,7 +1,7 @@
 import { GuardValue } from "../GuardValue";
 import { PrismaType } from "../guard";
 
-abstract class GuardNumbers extends GuardValue<number> {
+export abstract class GuardNumbers extends GuardValue<number> {
 	minValue?: number;
 	maxValue?: number;
 	constructor(type: PrismaType) {
@@ -22,7 +22,7 @@ abstract class GuardNumbers extends GuardValue<number> {
 	}
 	override validator(value: string): string[] | undefined {
 		const n = Number(value);
-		if (value === "" || Number.isNaN(n)) {
+		if (value.trim() === "" || Number.isNaN(n)) {
 			return ["数値である必要があります。"];
 		}
 		if (this.minValue && this.maxValue && (n < this.minValue || n > this.maxValue)) {
@@ -52,6 +52,7 @@ export class GuardInt extends GuardNumbers {
 			err?.push("整数である必要があります。");
 			return err ?? ["整数である必要があります。"];
 		}
+		return err;
 	}
 }
 export class GuardFloat extends GuardNumbers {
