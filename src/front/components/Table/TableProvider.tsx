@@ -178,6 +178,15 @@ export function TableProvider(props: TableProviderProps) {
 													});
 												}}
 												onValueChanged={(v, old) => {
+													if(!field._isFreeEdit){
+														console.log("free");
+														if(tableChangesRepo.current?.update(loc,v) === null){
+															tableChangesRepo.current?.addChange(loc, {
+																new: v,
+															});
+														}
+														return;
+													}
 													const yText = tableChangesRepo.current?.getYTextOrNull(loc)??null;
 													if (yText === null) {
 														tableChangesRepo.current?.addChange(loc, {

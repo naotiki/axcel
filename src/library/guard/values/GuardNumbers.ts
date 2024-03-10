@@ -4,6 +4,9 @@ import { PrismaType } from "../guard";
 abstract class GuardNumbers extends GuardValue<number> {
 	minValue?: number;
 	maxValue?: number;
+	constructor(type: PrismaType) {
+		super(type, true);
+	}
 	min(min: number) {
 		this.minValue = min;
 		return this;

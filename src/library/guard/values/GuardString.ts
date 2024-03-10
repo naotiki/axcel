@@ -63,7 +63,7 @@ export class GuardString extends GuardValue<string> {
 		return this;
 	}
 	constructor() {
-		super(PrismaType.String);
+		super(PrismaType.String,true);
 	}
 
 	override defValidate(err: string[]) {

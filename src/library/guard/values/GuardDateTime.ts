@@ -11,7 +11,7 @@ export class GuardDateTime extends GuardValue<Date> {
     _updatedAt?:boolean;
     isDateOnly?:boolean;
     constructor() {
-        super(PrismaType.DateTime);
+        super(PrismaType.DateTime,false);
     }
     dateOnly(){
         this.isDateOnly = true;

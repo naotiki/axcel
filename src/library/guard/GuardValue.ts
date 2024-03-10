@@ -14,8 +14,10 @@ export abstract class GuardValue<T> {
 	_readonly?: boolean;
 	_optional?: boolean;
 	attrs: GuardValueAnotations = {};
-	protected constructor(pt: PrismaType) {
+	_isFreeEdit:boolean;
+	protected constructor(pt: PrismaType,freeEdit:boolean) {
 		this.prismaType = pt;
+		this._isFreeEdit = freeEdit;
 	}
 	default<D extends GuardValue<T>>(v: DefaultValue<D>) {
 		this._default = v;

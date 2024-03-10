@@ -12,7 +12,7 @@ export class GuardEnum<T extends string> extends GuardValue<T> {
 	enumValues: [T, ...T[]];
 
 	constructor(name: string, enumValues: [T, ...T[]]) {
-		super(PrismaType.Enum);
+		super(PrismaType.Enum,false);
 		this.name = name;
 		this.enumValues = enumValues;
 	}

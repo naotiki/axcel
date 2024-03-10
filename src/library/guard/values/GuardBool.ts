@@ -12,7 +12,7 @@ export class GuardBool extends GuardValue<boolean> {
         }
     }
     constructor() {
-        super(PrismaType.Boolean);
+        super(PrismaType.Boolean,false);
     }
     override defValidate(_err:string[]){
         return;
