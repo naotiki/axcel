@@ -1,7 +1,8 @@
 import devServer from "@hono/vite-dev-server";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
-
+import { TanStackRouterVite } from '@tanstack/router-vite-plugin'
+import tsconfigPaths from "vite-tsconfig-paths";
 export default defineConfig(({ mode }) => {
 	if (mode === "client") {
 		return {
@@ -13,6 +14,7 @@ export default defineConfig(({ mode }) => {
 					},
 				},
 			},
+			plugins: [tsconfigPaths()]
 		};
 	}
 	return {
@@ -26,7 +28,8 @@ export default defineConfig(({ mode }) => {
 		build: {
 			emptyOutDir: false,
 		},
-		plugins: [
+		plugins: [TanStackRouterVite(),
+			tsconfigPaths(),
 			devServer({
 				entry: "./src/index.tsx",
 			}),

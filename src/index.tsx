@@ -1,14 +1,27 @@
 import { Hono } from "hono";
 import { renderToString } from "react-dom/server";
 import api from "./api/index";
-
+import { initAuthConfig } from "@hono/auth-js";
+import Keycloak from "@auth/core/providers/keycloak";
 const app = new Hono();
+app.use(
+	"*",
+	initAuthConfig((c) => ({
+		secret: process.env.AUTH_SECRET,
+		providers: [
+			Keycloak({
+				clientId: process.env.KEYCLOAK_CLIENT_ID,
+				clientSecret: process.env.KEYCLOAK_SECRET,
+				issuer: process.env.KEYCLOAK_ISSUER,
+			}),
+		],
+	})),
+);
+
 
 app.route("/api", api);
 
-
-
-app.get("/", (c) => {
+app.get("/*", (c) => {
 	return c.html(
 		renderToString(
 			<html lang="ja">
@@ -19,13 +32,13 @@ app.get("/", (c) => {
 						<script type="module" src="/static/client.js" />
 					) : (
 						<>
-							<script type="module" src="/src/client.tsx" />
+							<script type="module" src="/src/App.tsx" />
 						</>
 					)}
 					<title>Axcel</title>
 				</head>
 				<body>
-					<div id="root" />
+					<div id="app" />
 				</body>
 			</html>,
 		),

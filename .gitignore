@@ -3,3 +3,5 @@ bun.lockb
 dist
 prisma/*
 !prisma/*.prisma
+**/*.gen.ts
+.env**

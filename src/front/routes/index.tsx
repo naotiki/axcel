@@ -1,10 +1,11 @@
-import { Center, Container, Table } from "@mantine/core";
-import { useEffect } from "react";
-import { z } from "zod";
+import { Center, Container } from "@mantine/core";
+import { createFileRoute } from "@tanstack/react-router";
 import { Row, TableProvider } from "../components/Table/TableProvider";
-import { TableHeader } from "../components/Table/TableHeader";
-import { CellText } from "../components/Table/CellText";
+import { z } from "zod";
 
+export const Route = createFileRoute("/")({
+	component: Index,
+});
 const schemes: Row[] = [
 	{
 		name: "id",
@@ -27,8 +28,7 @@ const schemes: Row[] = [
 		type: z.string().datetime().readonly(),
 	},
 ];
-export function Top() {
-	useEffect(() => {}, []);
+function Index() {
 	return (
 		<>
 			<Container size="md" pt={5} />
