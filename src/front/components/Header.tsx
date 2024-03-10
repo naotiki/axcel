@@ -13,7 +13,7 @@ export function Header() {
 					<Avatar size="lg">{user.name?.split(" ").map(s=>s[0]).join("")}</Avatar>
 					<Text>{user.name}</Text>
 					<Button variant="outline" onClick={()=>{
-						signOut()
+						signOut({callbackUrl:`/api/auth/signin?callbackUrl=${location.href}`})
 					}}>ログアウト</Button>
 				</Flex>
 			</Container>
