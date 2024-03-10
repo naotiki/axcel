@@ -31,7 +31,7 @@ export abstract class GuardValue<T> {
 		this._unique = true;
 		return this;
 	}
-	clientReadonly() {
+	axcelReadonly() {
 		this._readonly = true;
 		return this;
 	}

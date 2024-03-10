@@ -13,13 +13,13 @@ export type AbsoluteCellPosition<T extends GuardModel<string, GuardSchema<string
 
 
 export const mockModel = g.model("Movie", {
-	id: g.int().id().default(autoIncrement).label("ID").clientReadonly(),
+	id: g.int().id().default(autoIncrement).label("ID").axcelReadonly(),
 	title: g.string().label("タイトル").min(1),
 	status: g.enum("Status", ["Ok", "Limited", "Suspended"]).label("ステータス").enumLabels({
 		Ok: "公開",
 		Limited: "限定",
 		Suspended: "停止",
-	}).clientReadonly(),
+	}).axcelReadonly(),
 	category: g.string().label("カテゴリー"),
 	check: g.bool().label("チェック").optional(),
 	number: g.int().label("数値").optional(),
@@ -62,7 +62,7 @@ export const mockDatas: MockModel[] = [
 ];
 
 export const creator = g.model("Creator", {
-	id: g.int().id().default(autoIncrement).label("ID").clientReadonly(),
+	id: g.int().id().default(autoIncrement).label("ID").axcelReadonly(),
 	name: g.string().label("名前"),
 	country: g.string().label("国"),
 	website: g
@@ -76,7 +76,7 @@ export const creator = g.model("Creator", {
 });
 
 export const language = g.model("Language", {
-	id: g.int().id().default(autoIncrement).label("ID").clientReadonly(),
+	id: g.int().id().default(autoIncrement).label("ID").axcelReadonly(),
 	name: g.string().label("名前"),
 	firstRelease: g.dateTime().label("初版リリース日").dateOnly(),
 	latestVersion: g.string().label("バージョン"),
@@ -102,7 +102,7 @@ export const language = g.model("Language", {
 
 
 export const mockModel2 = g.model("Movie", {
-	id: g.int().id().default(autoIncrement).label("ID").clientReadonly(),
+	id: g.int().id().default(autoIncrement).label("ID").axcelReadonly(),
 	title: g.string().label("タイトル"),
 	status: g.enum("Status", ["Ok", "Limited", "Suspended"]).label("ステータス").enumLabels({
 		Ok: "公開",
