@@ -2,7 +2,7 @@ import * as Y from "yjs";
 import { GuardModel, GuardModelColumn, GuardModelInput, GuardSchema } from "../../library/guard/GuardModel";
 import { AbsoluteCellPosition } from "../components/Table/TableDevTest";
 
-type MapValueType = Y.Text | string | undefined|null;
+export type MapValueType = Y.Text | string | undefined|null;
 type TableChange<T extends GuardModel<string, GuardSchema<string>>> = {
 	//row
 	//_id: string;

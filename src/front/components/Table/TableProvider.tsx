@@ -29,7 +29,7 @@ import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { getRandomName, User, UserRepository } from "../../repo/UserRepository";
 import { getRandomColor } from "../../utils/Color";
-import { Changes, TableChangesRepository } from "../../repo/TableChangesRepository";
+import { Changes, MapValueType, TableChangesRepository } from "../../repo/TableChangesRepository";
 import { GuardValue } from "../../../library/guard/GuardValue";
 import { GuardBool } from "../../../library/guard/values/GuardBool";
 import { GuardDateTime } from "../../../library/guard/values/GuardDateTime";
@@ -37,6 +37,7 @@ import { GuardInt, GuardNumbers } from "../../../library/guard/values/GuardNumbe
 import { useContextMenu } from "../ContextMenuProvider";
 import { useClipboard } from "@mantine/hooks";
 import { IconTablePlus } from "@tabler/icons-react";
+import { GuardModelInput } from "@/library/guard/GuardModel";
 const TableContext = createContext<TableManager | null>(null);
 //Wrapper
 export function useTable() {
@@ -329,11 +330,11 @@ export function TableProvider(props: TableProviderProps) {
 					onClick={() => {
 						tableChangesRepo.current?.addAddition(
 							uuidv4(),
-							Object.fromEntries(
+							(Object.fromEntries(
 								Object.entries(mockModel.modelSchema).map(([key, field]) => {
 									return [key, field instanceof GuardValue && field._default ? undefined : null];
-								}),
-							),
+								})
+							) as {[K in keyof GuardModelInput<typeof mockModel>]: MapValueType}),
 						);
 					}}
 				>
