@@ -1,4 +1,4 @@
-import { Center, Container } from "@mantine/core";
+import { Center, Container, Stack } from "@mantine/core";
 import { createFileRoute } from "@tanstack/react-router";
 import { Row, TableProvider } from "../components/Table/TableProvider";
 import { z } from "zod";
@@ -32,9 +32,9 @@ function Index() {
 	return (
 		<>
 			<Container size="md" pt={5} />
-			<Center>
+			<Stack justify="center" align="center">
 				<TableProvider rows={schemes} />
-			</Center>
+			</Stack>
 		</>
 	);
 }

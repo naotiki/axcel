@@ -6,5 +6,7 @@
         "**/*.less",
         "node_modules/@mantine/core/styles.css"
     ],
-    "editor.tabSize": 2
+    "editor.tabSize": 2,
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "typescript.tsdk": "node_modules/typescript/lib"
 }

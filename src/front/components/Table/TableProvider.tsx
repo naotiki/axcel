@@ -3,23 +3,25 @@ import { TableManager } from "../../model/TableManager";
 import { ZodTypeAny } from "zod";
 import { css } from "@emotion/css";
 import * as Diff from "diff";
+import { v4 as uuidv4 } from "uuid";
 import {
 	Avatar,
-	Badge,
 	Box,
 	Center,
 	Checkbox,
-	Indicator,
 	NativeSelect,
 	NumberInput,
 	Popover,
 	Text,
 	TextInput,
 	Tooltip,
+	Paper,
+	Button,
+	Divider,
+	Stack,
 } from "@mantine/core";
 import { DatePickerInput, DateTimePicker } from "@mantine/dates";
 import { AbsoluteCellPosition, mockDatas, mockModel } from "./TableDevTest";
-import { useClickOutside, useFocusTrap, useResizeObserver } from "@mantine/hooks";
 import { GuardField } from "../../../library/guard/guard";
 import { GuardEnum } from "../../../library/guard/values/GuardEnum";
 import * as Y from "yjs";
@@ -31,6 +33,9 @@ import { GuardValue } from "../../../library/guard/GuardValue";
 import { GuardBool } from "../../../library/guard/values/GuardBool";
 import { GuardDateTime } from "../../../library/guard/values/GuardDateTime";
 import { GuardInt, GuardNumbers } from "../../../library/guard/values/GuardNumbers";
+import { useContextMenu } from "../ContextMenuProvider";
+import { useClipboard } from "@mantine/hooks";
+import { IconTablePlus } from "@tabler/icons-react";
 const TableContext = createContext<TableManager | null>(null);
 //Wrapper
 export function useTable() {
@@ -51,12 +56,18 @@ const cell = css({
 	maxWidth: "8em",
 	border: "1px solid #bbbbbb",
 });
+const actionCell = css(cell, {
+	//padding: "0.25em",
+	width: "4em",
+	maxWidth: "4em",
+	backgroundColor: "#ffffff",
+});
 const readOnlyCell = css(cell, {
 	backgroundColor: "#f0f0f0",
 });
 const dataCell = css(cell, {
 	overflow: "visible",
-	backgroundColor: "#ffffff",
+	//backgroundColor: "#ffffff",
 });
 const changedCell = css(dataCell, {
 	backgroundColor: "#ffffbb",
@@ -137,6 +148,7 @@ export function TableProvider(props: TableProviderProps) {
 				>
 					<thead className={header}>
 						<tr>
+							<th className={actionCell}>操作</th>
 							{Object.entries(mockModel.modelSchema).map(([key, value]) => {
 								return (
 									<th className={cell} key={key}>
@@ -150,6 +162,7 @@ export function TableProvider(props: TableProviderProps) {
 						{data.map((o, i) => {
 							return (
 								<tr key={o._id}>
+									<td className={actionCell}>a</td>
 									{Object.entries(mockModel.modelSchema).map(([key, field], j) => {
 										const loc: CellLocation = {
 											id: o._id,
@@ -165,7 +178,7 @@ export function TableProvider(props: TableProviderProps) {
 										}
 										return (
 											<TableDataCell
-												changed={(changes?.getYTextOrNull(loc) ?? null) !== null}
+												changed={changes === null ? false : changes.isChanged(loc) !== null}
 												loc={loc}
 												key={key}
 												field={field}
@@ -189,8 +202,11 @@ export function TableProvider(props: TableProviderProps) {
 														selectedCell: l,
 													});
 												}}
+												onValueReset={() => {
+													tableChangesRepo.current?.removeCellChange(loc);
+												}}
 												onValueChanged={(v, old) => {
-													if (!field._isFreeEdit) {
+													if (!field._isFreeEdit || v === undefined) {
 														console.log("not free", v);
 														if (tableChangesRepo.current?.update(loc, v) === null) {
 															tableChangesRepo.current?.addChange(loc, {
@@ -207,7 +223,7 @@ export function TableProvider(props: TableProviderProps) {
 														return;
 													}
 													let count = 0;
-													for (const part of Diff.diffChars(old, v)) {
+													for (const part of Diff.diffChars(old ?? "", v)) {
 														if (part.added) {
 															yText.insert(count, part.value);
 														} else if (part.removed) {
@@ -224,6 +240,11 @@ export function TableProvider(props: TableProviderProps) {
 						})}
 					</tbody>
 				</table>
+				<Button fullWidth my={10} leftSection={<IconTablePlus />} onClick={()=>{
+					tableChangesRepo.current?.addAddition(uuidv4(),);
+				}}>
+					 データを追加
+				</Button>
 			</div>
 		</>
 	);
@@ -239,12 +260,83 @@ type TableDataCellProps = {
 		name: string;
 		color: string;
 	}[];
-	onValueChanged?: (v: string, old: string) => void;
-	onSelected?: (l: CellLocation) => void;
+	onValueChanged: (v: string | undefined, old: string | undefined) => void;
+	onValueReset: () => void;
+	onSelected: (l: CellLocation) => void;
 };
 
 function TableDataCell(props: TableDataCellProps) {
 	const [editing, setEditing] = useState(false);
+	const { copy } = useClipboard();
+	const ref = useContextMenu<HTMLTableCellElement>(
+		(c) => (
+			<Paper shadow="sm" withBorder p={"0.5rem"} style={{ minWidth: "5rem" }}>
+				<Text>メニュー</Text>
+				<Divider my={5} />
+				<Stack gap={3}>
+					<Button
+						fullWidth
+						radius={"xs"}
+						size="compact-md"
+						variant="outline"
+						color="default"
+						onClick={() => {
+							copy(props.value ?? "");
+							c();
+						}}
+					>
+						値をコピー
+					</Button>
+					{props.value !== undefined && props.field instanceof GuardValue && props.field._optional && (
+						<Button
+							fullWidth
+							radius={"xs"}
+							size="compact-md"
+							variant="light"
+							onClick={() => {
+								props.onValueChanged?.(undefined, props.value);
+								c();
+							}}
+						>
+							値を「空」にする
+						</Button>
+					)}
+					{ props.field instanceof GuardValue && props.field._default&&props.value !== props.field._default && (
+						<Button
+							fullWidth
+							radius={"xs"}
+							size="compact-md"
+							variant="light"
+							onClick={() => {
+								if (props.field instanceof GuardValue && props.field._default)
+									props.onValueChanged?.(props.field._default.toString(), props.value);
+								c();
+							}}
+						>
+							値を「{props.field._default}」にする
+						</Button>
+					)}
+					{props.changed && (
+						<Button
+							fullWidth
+							radius={"xs"}
+							size="compact-md"
+							variant="light"
+							color="red"
+							onClick={() => {
+								props.onValueReset?.();
+								c();
+							}}
+						>
+							変更をもとの値に戻す
+						</Button>
+					)}
+				</Stack>
+			</Paper>
+		),
+		() => props.onSelected?.(props.loc),
+	);
+
 	useEffect(() => {
 		if (!props.selected) {
 			setEditing(false);
@@ -256,7 +348,7 @@ function TableDataCell(props: TableDataCellProps) {
 			className={`${props.selected ? focusedDataCell(props.selected) : dataCell} ${
 				props.changed ? changedCell : ""
 			}`}
-			onClick={() => {
+			onClick={(e) => {
 				if (editing) return;
 				if (props.selected) {
 					setEditing(true);
@@ -264,6 +356,7 @@ function TableDataCell(props: TableDataCellProps) {
 					props.onSelected?.(props.loc);
 				}
 			}}
+			ref={ref}
 		>
 			<EditingBadges users={props.selectingUsers} />
 			{props.value !== undefined ? (

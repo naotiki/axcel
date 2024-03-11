@@ -6,6 +6,7 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { SessionProvider } from "@hono/auth-js/react";
 import { UserProvider } from "./front/components/UserProvider";
+import { ContextMenuProvider } from "./front/components/ContextMenuProvider";
 // Create a new router instance
 const router = createRouter({ routeTree });
 
@@ -21,7 +22,9 @@ function App() {
 			<SessionProvider>
 				<MantineProvider>
 					<UserProvider>
-						<RouterProvider router={router} />
+						<ContextMenuProvider>
+							<RouterProvider router={router} />
+						</ContextMenuProvider>
 					</UserProvider>
 				</MantineProvider>
 			</SessionProvider>

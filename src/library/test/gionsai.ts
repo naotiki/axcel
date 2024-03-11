@@ -87,5 +87,5 @@ generator client {
 	provider        = "prisma-client-js"
 }
 `);
-z.number().int
+
 export default g;

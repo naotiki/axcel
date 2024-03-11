@@ -19,10 +19,10 @@ export const mockModel = g.model("Movie", {
 		Ok: "公開",
 		Limited: "限定",
 		Suspended: "停止",
-	}).axcelReadonly(),
+	}),
 	category: g.string().label("カテゴリー"),
 	check: g.bool().label("チェック").optional(),
-	number: g.int().label("数値").optional(),
+	number: g.int().label("数値").optional().default(1),
 	date: g.dateTime().label("日付").optional().dateOnly(),
 	dateTime: g.dateTime().label("日時").optional(),
 });
@@ -100,7 +100,7 @@ export const language = g.model("Language", {
 	funny: g.bool().anotate({ label: "楽しい", description: '関数宣言が"fun"かどうか' }),
 });
 
-
+/* 
 export const mockModel2 = g.model("Movie", {
 	id: g.int().id().default(autoIncrement).label("ID").axcelReadonly(),
 	title: g.string().label("タイトル"),
@@ -117,4 +117,14 @@ export const mockModel2 = g.model("Movie", {
 		},
 		["id"],
 	),
-});
+}); */
+g.prismaHeader(`
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+generator client {
+	provider        = "prisma-client-js"
+}
+`);
+export default g;

@@ -5,3 +5,4 @@ prisma/*
 !prisma/*.prisma
 **/*.gen.ts
 .env**
+y_db/
