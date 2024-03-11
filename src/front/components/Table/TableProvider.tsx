@@ -164,7 +164,7 @@ export function TableProvider(props: TableProviderProps) {
 							return (
 								<tr key={o._id}>
 									<td className={actionCell}>a</td>
-									{Object.entries(mockModel.modelSchema).map(([key, field], j) => {
+									{Object.entries(mockModel.modelSchema).map(([key, field]) => {
 										const loc: CellLocation = {
 											id: o._id,
 											column: key as keyof typeof mockModel.modelSchema,
@@ -177,8 +177,7 @@ export function TableProvider(props: TableProviderProps) {
 												</td>
 											);
 										}
-										const v =
-											changes === null || !changes?.isChanged(loc) ? value : changes.getValue(loc);
+										const v = changes === null || !changes?.isChanged(loc) ? value : changes.getValue(loc);
 										return (
 											<TableDataCell
 												changed={changes === null ? false : changes.isChanged(loc) !== null}
@@ -209,7 +208,7 @@ export function TableProvider(props: TableProviderProps) {
 													tableChangesRepo.current?.removeCellChange(loc);
 												}}
 												onValueChanged={(v, old) => {
-													if (!field._isFreeEdit || v===undefined || v===null) {
+													if (!field._isFreeEdit || v === undefined || v === null) {
 														console.log("not free", v);
 														if (tableChangesRepo.current?.update(loc, v) === false) {
 															tableChangesRepo.current?.addChange(loc, {
@@ -219,8 +218,7 @@ export function TableProvider(props: TableProviderProps) {
 														return;
 													}
 													const yText =
-														(tableChangesRepo.current?.getValue(loc) as Y.Text | null | undefined) ??
-														null;
+														(tableChangesRepo.current?.getValue(loc) as Y.Text | null | undefined) ?? null;
 													if (yText === null) {
 														tableChangesRepo.current?.addChange(loc, {
 															new: new Y.Text(v),
@@ -243,6 +241,85 @@ export function TableProvider(props: TableProviderProps) {
 								</tr>
 							);
 						})}
+						{changes?.addtions &&
+							Object.entries(changes.addtions).map(([id, addition]) => (
+								<tr key={id}>
+									<td className={actionCell}>a</td>
+									{Object.entries(mockModel.modelSchema).map(([key, field]) => {
+										const loc: CellLocation = {
+											id: id,
+											column: key as keyof typeof mockModel.modelSchema,
+										};
+										const value = addition[key as keyof typeof mockModel.modelSchema];
+										if (field._readonly) {
+											return (
+												<td className={readOnlyCell} key={key}>
+													<GuardFieldDisplay field={field} value={value?.toString()} />
+												</td>
+											);
+										}
+										const v = changes === null || !changes?.isChanged(loc) ? value : changes.getValue(loc);
+										return (
+											<TableDataCell
+												changed={changes === null ? false : changes.isChanged(loc) !== null}
+												loc={loc}
+												key={key}
+												field={field}
+												value={v instanceof Y.Text || (v !== null && v !== undefined) ? v.toString() : v}
+												selected={
+													selectedCell?.id === loc.id && selectedCell?.column === loc.column
+														? user?.user.color
+														: undefined
+												}
+												selectingUsers={users
+													.filter(
+														(u) =>
+															u.user._uid !== user?.user._uid &&
+															u.cursor.selectedCell?.column === loc.column &&
+															u.cursor.selectedCell?.id === loc.id,
+													)
+													.map((u) => ({ name: u.user.name, color: u.user.color }))}
+												onSelected={(l) => {
+													setSelectedCell(l);
+													userRepo.current?.updateUserCursor({
+														selectedCell: l,
+													});
+												}}
+												onValueReset={() => {
+													tableChangesRepo.current?.removeCellChange(loc);
+												}}
+												onValueChanged={(v, old) => {
+													if (!field._isFreeEdit || v === undefined || v === null) {
+														console.log("not free", v);
+														if (tableChangesRepo.current?.update(loc, v) === false) {
+															tableChangesRepo.current?.addChange(loc, {
+																new: v,
+															});
+														}
+														return;
+													}
+													const yText =
+														(tableChangesRepo.current?.getValue(loc) as Y.Text | null | undefined) ?? null;
+													if (yText === null) {
+														tableChangesRepo.current?.addChange(loc, {
+															new: new Y.Text(v),
+														});
+														return;
+													}
+													let count = 0;
+													for (const part of Diff.diffChars(old ?? "", v)) {
+														if (part.added) {
+															yText.insert(count, part.value);
+														} else if (part.removed) {
+															yText.delete(count, part.value.length);
+														}
+														count += part.value.length;
+													}
+												}}
+											/>)
+									})}
+								</tr>
+							))}
 					</tbody>
 				</table>
 				<Button
@@ -250,10 +327,14 @@ export function TableProvider(props: TableProviderProps) {
 					my={10}
 					leftSection={<IconTablePlus />}
 					onClick={() => {
-						
-						tableChangesRepo.current?.addAddition(uuidv4(),Object.fromEntries(Object.entries(mockModel.modelSchema).map(([key]) => {
-							return [key,null];
-						})));
+						tableChangesRepo.current?.addAddition(
+							uuidv4(),
+							Object.fromEntries(
+								Object.entries(mockModel.modelSchema).map(([key, field]) => {
+									return [key, field instanceof GuardValue && field._default ? undefined : null];
+								}),
+							),
+						);
 					}}
 				>
 					データを追加
@@ -373,9 +454,9 @@ function TableDataCell(props: TableDataCellProps) {
 		>
 			<EditingBadges users={props.selectingUsers} />
 			<ErrorMaker
-					opened={!!props.selected}
-					errors={props.field instanceof GuardValue ? props.field.validate(props.value) : undefined}
-				/>
+				opened={!!props.selected}
+				errors={props.field instanceof GuardValue ? props.field.validate(props.value) : undefined}
+			/>
 			<div className={css({ padding: "0.25em" })}>
 				{editing ? (
 					<GuardFieldInput
