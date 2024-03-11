@@ -19,6 +19,7 @@ import {
 	Button,
 	Divider,
 	Stack,
+	Group,
 } from "@mantine/core";
 import { DatePickerInput, DateTimePicker } from "@mantine/dates";
 import { AbsoluteCellPosition, mockDatas, mockModel } from "./TableDevTest";
@@ -126,13 +127,13 @@ export function TableProvider(props: TableProviderProps) {
 	const [selectedCell, setSelectedCell] = useState<CellLocation | null>(null);
 	return (
 		<>
-			<div>
+			<Group>
 				{users.map((u) => (
 					<Avatar src={null} alt={u.user.name} color={u.user.color} key={u.user._uid}>
 						{u.user.name}
 					</Avatar>
 				))}
-			</div>
+			</Group>
 			<div
 				className={css({
 					overflowX: "visible",
@@ -176,13 +177,16 @@ export function TableProvider(props: TableProviderProps) {
 												</td>
 											);
 										}
+										console.dir(value);
+										const v =
+											changes === null || !changes?.isChanged(loc) ? value : changes.getYTextOrNull(loc);
 										return (
 											<TableDataCell
 												changed={changes === null ? false : changes.isChanged(loc) !== null}
 												loc={loc}
 												key={key}
 												field={field}
-												value={changes?.getYTextOrNull(loc)?.toString() ?? value?.toString()}
+												value={v instanceof Y.Text || (v !== null && v !== undefined) ? v.toString() : v}
 												selected={
 													selectedCell?.id === loc.id && selectedCell?.column === loc.column
 														? user?.user.color
@@ -206,16 +210,16 @@ export function TableProvider(props: TableProviderProps) {
 													tableChangesRepo.current?.removeCellChange(loc);
 												}}
 												onValueChanged={(v, old) => {
-													if (!field._isFreeEdit || v === undefined) {
+													if (!field._isFreeEdit || !v) {
 														console.log("not free", v);
-														if (tableChangesRepo.current?.update(loc, v) === null) {
+														if (tableChangesRepo.current?.update(loc, v) === false) {
 															tableChangesRepo.current?.addChange(loc, {
 																new: v,
 															});
 														}
 														return;
 													}
-													const yText = tableChangesRepo.current?.getYTextOrNull(loc) ?? null;
+													const yText = tableChangesRepo.current?.getYTextOrNull(loc) as Y.Text |null|undefined?? null;
 													if (yText === null) {
 														tableChangesRepo.current?.addChange(loc, {
 															new: new Y.Text(v),
@@ -240,10 +244,15 @@ export function TableProvider(props: TableProviderProps) {
 						})}
 					</tbody>
 				</table>
-				<Button fullWidth my={10} leftSection={<IconTablePlus />} onClick={()=>{
-					tableChangesRepo.current?.addAddition(uuidv4(),);
-				}}>
-					 データを追加
+				<Button
+					fullWidth
+					my={10}
+					leftSection={<IconTablePlus />}
+					onClick={() => {
+						//	tableChangesRepo.current?.addAddition(uuidv4(),);
+					}}
+				>
+					データを追加
 				</Button>
 			</div>
 		</>
@@ -251,7 +260,7 @@ export function TableProvider(props: TableProviderProps) {
 }
 
 type TableDataCellProps = {
-	value?: string;
+	value: string | null | undefined;
 	field: GuardField;
 	loc: CellLocation;
 	changed: boolean;
@@ -260,7 +269,7 @@ type TableDataCellProps = {
 		name: string;
 		color: string;
 	}[];
-	onValueChanged: (v: string | undefined, old: string | undefined) => void;
+	onValueChanged: (v: string | null | undefined, old: string | null | undefined) => void;
 	onValueReset: () => void;
 	onSelected: (l: CellLocation) => void;
 };
@@ -287,7 +296,21 @@ function TableDataCell(props: TableDataCellProps) {
 					>
 						値をコピー
 					</Button>
-					{props.value !== undefined && props.field instanceof GuardValue && props.field._optional && (
+					{props.value !== null && props.field instanceof GuardValue && props.field._optional && (
+						<Button
+							fullWidth
+							radius={"xs"}
+							size="compact-md"
+							variant="light"
+							onClick={() => {
+								props.onValueChanged?.(null, props.value);
+								c();
+							}}
+						>
+							値を「空」にする
+						</Button>
+					)}
+					{props.value !== undefined && props.field instanceof GuardValue && props.field._default && (
 						<Button
 							fullWidth
 							radius={"xs"}
@@ -298,22 +321,7 @@ function TableDataCell(props: TableDataCellProps) {
 								c();
 							}}
 						>
-							値を「空」にする
-						</Button>
-					)}
-					{ props.field instanceof GuardValue && props.field._default&&props.value !== props.field._default && (
-						<Button
-							fullWidth
-							radius={"xs"}
-							size="compact-md"
-							variant="light"
-							onClick={() => {
-								if (props.field instanceof GuardValue && props.field._default)
-									props.onValueChanged?.(props.field._default.toString(), props.value);
-								c();
-							}}
-						>
-							値を「{props.field._default}」にする
+							値をデフォルトの「{props.field._default}」にする
 						</Button>
 					)}
 					{props.changed && (
@@ -332,6 +340,7 @@ function TableDataCell(props: TableDataCellProps) {
 						</Button>
 					)}
 				</Stack>
+				<Text>{JSON.stringify(props.value)}</Text>
 			</Paper>
 		),
 		() => props.onSelected?.(props.loc),
@@ -359,10 +368,16 @@ function TableDataCell(props: TableDataCellProps) {
 			ref={ref}
 		>
 			<EditingBadges users={props.selectingUsers} />
-			{props.value !== undefined ? (
+			{props.value ? (
 				<ErrorMaker
 					opened={!!props.selected}
-					errors={props.field instanceof GuardValue ? props.field.validate(props.value) : undefined}
+					errors={
+						props.value
+							? props.field instanceof GuardValue
+								? props.field.validate(props.value)
+								: undefined
+							: undefined
+					}
 				/>
 			) : (
 				<></>
@@ -426,11 +441,12 @@ function EditingBadges(props: EditingBadgesProps) {
 
 type GuardFieldDisplayProps = {
 	field: GuardField;
-	value?: string;
+	value?: string | null | undefined;
 };
 
 function GuardFieldDisplay({ field, value }: GuardFieldDisplayProps) {
-	if (value === undefined) return <Text c={"gray"}>{"< 空 >"}</Text>;
+	if (value === null) return <Text c={"gray"}>{"< 空 >"}</Text>;
+	if (value === undefined) return <Text c={"gray"}>{"< デフォルト >"}</Text>;
 	if (field instanceof GuardBool) {
 		return (
 			<Center>

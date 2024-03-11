@@ -23,8 +23,6 @@ export const mockModel = g.model("Movie", {
 	category: g.string().label("カテゴリー"),
 	check: g.bool().label("チェック").optional(),
 	number: g.int().label("数値").optional().default(1),
-	date: g.dateTime().label("日付").optional().dateOnly(),
-	dateTime: g.dateTime().label("日時").optional(),
 });
 export type MockModel = GuardModelOutput<typeof mockModel>;
 export const mockDatas: MockModel[] = [
@@ -33,30 +31,40 @@ export const mockDatas: MockModel[] = [
 		title: "てすとすと",
 		status: "Ok",
 		category: "fun",
+		check: true,
+		number: 2,
 	},
 	{
 		id: 2,
 		title: "てすとすと2",
 		status: "Limited",
 		category: "funny",
+		check: false,
+		number:null
 	},
 	{
 		id: 3,
 		title: "てすとすと3",
 		status: "Suspended",
 		category: "funniest",
+		check:null,
+		number: 0,
 	},
 	{
 		id: 4,
 		title: "てすとすと4",
 		status: "Ok",
 		category: "funniest",
+		check:null,
+		number: null,
 	},
 	{
 		id: 5,
 		title: "てすとすと5",
 		status: "Ok",
 		category: "funniest",
+		check:false,
+		number: 5,
 	},
 
 ];

@@ -83,7 +83,9 @@ type GuardSchemaOutput<S extends GuardSchema> = {
 };
 
 type GuardSchemaInput<S extends GuardSchema> = {
-	[K in OptionalGuardFields<S> | HasDefaultGuardFields<S>]?: GuardFieldInfer<S[K]>;
+	[K in OptionalGuardFields<S>]: GuardFieldInfer<S[K]>|null;
+}&{
+	[K in HasDefaultGuardFields<S>]?: GuardFieldInfer<S[K]>|undefined;
 } & {
 	[K in Exclude<keyof S, OptionalGuardFields<S> | HasDefaultGuardFields<S>>]: GuardFieldInfer<S[K]>;
 };
