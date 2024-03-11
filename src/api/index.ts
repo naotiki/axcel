@@ -25,7 +25,6 @@ const prisma = new PrismaClient();
 const createMock = api.post("/mock", gCreateValidator(mockModel), async (c) => {
 	const result: GuardModelOutput<typeof mockModel> = await prisma.movie.create({
 		data: {
-			number
 			
 		},
 	});

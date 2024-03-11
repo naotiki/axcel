@@ -1,10 +1,13 @@
 {
   "type": "module",
   "scripts": {
-    "dev": "bun run dev:y-websocket & vite",
+    "dev": "bun run-p dev:*",
+    "dev:vite":"vite",
+    "dev:hono": "bun run --watch ./src/index.tsx",
     "dev:y-websocket": "PORT=1234 YPERSISTENCE=./y_db bunx y-websocket-server",
     "build": "vite build --mode client && vite build",
-    "__dev": "bun run --hot src/index.ts"
+    "__dev": "bun run --hot src/index.ts",
+    "_dev": "bun run dev:y-websocket & vite"
   },
   "dependencies": {
     "@auth/core": "^0.28.0",
@@ -42,6 +45,7 @@
     "@types/uuid": "^9.0.8",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.18",
+    "npm-run-all2": "^6.1.2",
     "postcss": "^8.4.35",
     "postcss-preset-mantine": "^1.13.0",
     "postcss-simple-vars": "^7.0.1",

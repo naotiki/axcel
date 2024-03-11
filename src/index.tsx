@@ -6,16 +6,20 @@ import Keycloak from "@auth/core/providers/keycloak";
 const app = new Hono();
 app.use(
 	"*",
-	initAuthConfig((c) => ({
-		secret: process.env.AUTH_SECRET,
-		providers: [
-			Keycloak({
-				clientId: process.env.KEYCLOAK_CLIENT_ID,
-				clientSecret: process.env.KEYCLOAK_SECRET,
-				issuer: process.env.KEYCLOAK_ISSUER,
-			}),
-		],
-	})),
+	initAuthConfig((c) => {
+		c.res.headers.set("x-forwarded-host", process.env.AUTH_URL??"");
+		//c.res.headers["x-forwarded-host"] = process.env.AUTH_URL
+		return ({
+			secret: process.env.AUTH_SECRET,
+			providers: [
+				Keycloak({
+					clientId: process.env.KEYCLOAK_CLIENT_ID,
+					clientSecret: process.env.KEYCLOAK_SECRET,
+					issuer: process.env.KEYCLOAK_ISSUER,
+				}),
+			],
+		})
+	}),
 );
 
 
@@ -44,4 +48,4 @@ app.get("/*", (c) => {
 		),
 	);
 });
-export default app;
+export default  app
