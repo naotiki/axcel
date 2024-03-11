@@ -177,9 +177,8 @@ export function TableProvider(props: TableProviderProps) {
 												</td>
 											);
 										}
-										console.dir(value);
 										const v =
-											changes === null || !changes?.isChanged(loc) ? value : changes.getYTextOrNull(loc);
+											changes === null || !changes?.isChanged(loc) ? value : changes.getValue(loc);
 										return (
 											<TableDataCell
 												changed={changes === null ? false : changes.isChanged(loc) !== null}
@@ -220,7 +219,7 @@ export function TableProvider(props: TableProviderProps) {
 														return;
 													}
 													const yText =
-														(tableChangesRepo.current?.getYTextOrNull(loc) as Y.Text | null | undefined) ??
+														(tableChangesRepo.current?.getValue(loc) as Y.Text | null | undefined) ??
 														null;
 													if (yText === null) {
 														tableChangesRepo.current?.addChange(loc, {
@@ -251,10 +250,10 @@ export function TableProvider(props: TableProviderProps) {
 					my={10}
 					leftSection={<IconTablePlus />}
 					onClick={() => {
-						Object.entries(mockModel.modelSchema).map(([key, field]) => {
-							const value = [key];
-						});
-						//tableChangesRepo.current?.addAddition(uuidv4(),);
+						
+						tableChangesRepo.current?.addAddition(uuidv4(),Object.fromEntries(Object.entries(mockModel.modelSchema).map(([key]) => {
+							return [key,null];
+						})));
 					}}
 				>
 					データを追加

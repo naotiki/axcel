@@ -2,14 +2,15 @@ import * as Y from "yjs";
 import { GuardModel, GuardModelColumn, GuardModelInput, GuardSchema } from "../../library/guard/GuardModel";
 import { AbsoluteCellPosition } from "../components/Table/TableDevTest";
 
+type MapValueType = Y.Text | string | undefined|null;
 type TableChange<T extends GuardModel<string, GuardSchema<string>>> = {
 	//row
 	//_id: string;
 	//column: GuardModelColumn<T>;
-	new: Y.Text | string | undefined|null;
+	new: MapValueType;
 };
 type TableAdd<T extends GuardModel<string, GuardSchema<string>>> = {
-	[K in keyof GuardModelInput<T>]: Y.Text | string;
+	[K in keyof GuardModelInput<T>]: MapValueType;
 };
 
 export type TableChangeEventType = "change" | "add" | "delete";
@@ -18,10 +19,9 @@ export type Changes<T extends GuardModel<string, GuardSchema<string>>> = {
 	deletions: string[];
 	changes: { [key: string]: { new: MapValueType } };
 	addtions: { [key: string]: { [K in keyof GuardModelInput<T>]: MapValueType} };
-	getYTextOrNull(location: AbsoluteCellPosition<T>): MapValueType;
+	getValue(location: AbsoluteCellPosition<T>): MapValueType;
 	isChanged(location: AbsoluteCellPosition<T>): TableChangeEventType | null;
 };
-type MapValueType = Y.Text | string | undefined|null;
 export class TableChangesRepository<T extends GuardModel<string, GuardSchema<string>>> {
 	deletions: Y.Array<string>;
 	changes: Y.Map<Y.Map<MapValueType>>;
@@ -65,7 +65,7 @@ export class TableChangesRepository<T extends GuardModel<string, GuardSchema<str
 		this.changes.set(this.genCellId(location), map);
 	}
 	addAddition(id: string, addition: TableAdd<T>) {
-		const map = new Y.Map<MapValueType>(Object.entries(addition.data));
+		const map = new Y.Map<MapValueType>(Object.entries(addition));
 		this.addtions.set(id, map);
 	}
 	addDeletion(id: string) {
@@ -86,7 +86,7 @@ export class TableChangesRepository<T extends GuardModel<string, GuardSchema<str
 		return false;
 	}
 //TODO: ここでエラーが出る
-	getYTextOrNull(location: AbsoluteCellPosition<T>): MapValueType {
+	getValue(location: AbsoluteCellPosition<T>): MapValueType {
 		const c=this.changes.get(this.genCellId(location))
 		if(c){
 			return c.get("new")
@@ -114,7 +114,7 @@ export class TableChangesRepository<T extends GuardModel<string, GuardSchema<str
 			deletions: this.deletions.toArray(),
 			changes: this.changes.toJSON(),
 			addtions: this.addtions.toJSON(),
-			getYTextOrNull(location: AbsoluteCellPosition<T>): MapValueType {
+			getValue(location: AbsoluteCellPosition<T>): MapValueType {
 				const c=this.changes[`${location.id}+${location.column ?? ""}`]
 				if(c){
 					return c.new
