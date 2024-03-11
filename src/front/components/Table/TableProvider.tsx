@@ -210,7 +210,7 @@ export function TableProvider(props: TableProviderProps) {
 													tableChangesRepo.current?.removeCellChange(loc);
 												}}
 												onValueChanged={(v, old) => {
-													if (!field._isFreeEdit || !v) {
+													if (!field._isFreeEdit || v===undefined || v===null) {
 														console.log("not free", v);
 														if (tableChangesRepo.current?.update(loc, v) === false) {
 															tableChangesRepo.current?.addChange(loc, {
@@ -219,7 +219,9 @@ export function TableProvider(props: TableProviderProps) {
 														}
 														return;
 													}
-													const yText = tableChangesRepo.current?.getYTextOrNull(loc) as Y.Text |null|undefined?? null;
+													const yText =
+														(tableChangesRepo.current?.getYTextOrNull(loc) as Y.Text | null | undefined) ??
+														null;
 													if (yText === null) {
 														tableChangesRepo.current?.addChange(loc, {
 															new: new Y.Text(v),
@@ -249,7 +251,10 @@ export function TableProvider(props: TableProviderProps) {
 					my={10}
 					leftSection={<IconTablePlus />}
 					onClick={() => {
-						//	tableChangesRepo.current?.addAddition(uuidv4(),);
+						Object.entries(mockModel.modelSchema).map(([key, field]) => {
+							const value = [key];
+						});
+						//tableChangesRepo.current?.addAddition(uuidv4(),);
 					}}
 				>
 					データを追加
@@ -368,20 +373,10 @@ function TableDataCell(props: TableDataCellProps) {
 			ref={ref}
 		>
 			<EditingBadges users={props.selectingUsers} />
-			{props.value ? (
-				<ErrorMaker
+			<ErrorMaker
 					opened={!!props.selected}
-					errors={
-						props.value
-							? props.field instanceof GuardValue
-								? props.field.validate(props.value)
-								: undefined
-							: undefined
-					}
+					errors={props.field instanceof GuardValue ? props.field.validate(props.value) : undefined}
 				/>
-			) : (
-				<></>
-			)}
 			<div className={css({ padding: "0.25em" })}>
 				{editing ? (
 					<GuardFieldInput

@@ -53,8 +53,14 @@ export abstract class GuardValue<T> {
 		return this;
 	}
 
-	validate(value: string): string[] | undefined {
+	validate(value: string|undefined|null): string[] | undefined {
 		//TODO
+		if (value===undefined) {
+			return this._default ? undefined : ["デフォルト値が設定されていません"];
+		}
+		if(value===null){
+			return this._optional ? undefined : ["空の値は許可されていません"];
+		}
 		const err = this.validator(value);
 		return err;
 		//return value;
