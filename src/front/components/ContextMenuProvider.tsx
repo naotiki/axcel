@@ -46,11 +46,11 @@ export function ContextMenuProvider({ children }: PropsWithChildren) {
 	const ctx = useRef(new ContextMenuService());
 	const [menu, setMenu] = useState<ReactNode | null>(null);
 	const size = useViewportSize();
-	const onClose = useCallback(() => {
+	const onClose = useCallback((_size?:{width:number,height:number}) => {
 		setMenu(null);
 	}, []);
 	useEffect(() => {
-		onClose();
+		onClose(size);
 	}, [size, onClose]);
 	const ref = useClickOutside<HTMLDivElement>(onClose);
 	useEffect(() => {

@@ -12,13 +12,10 @@ export default defineConfig(({ mode }) => {
 				"/api": {
 					target:"http://localhost:3000",
 					changeOrigin: false,
-					configure: (proxy, options) => {
-						// プロキシは 'http-proxy' のインスタンスになります
-					},
 				},
 				'/yws': {
 					target: 'ws://localhost:1234',
-					changeOrigin: true,
+					changeOrigin: false,
 					rewrite: (path) => path.replace(/^\/yws/, ''),
 				},
 			}

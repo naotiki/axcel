@@ -20,6 +20,9 @@ import {
 	Divider,
 	Stack,
 	Group,
+	Menu,
+	ActionIcon,
+	rem,
 } from "@mantine/core";
 import { DatePickerInput, DateTimePicker } from "@mantine/dates";
 import { AbsoluteCellPosition, mockDatas, mockModel } from "./TableDevTest";
@@ -29,14 +32,26 @@ import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { getRandomName, User, UserRepository } from "../../repo/UserRepository";
 import { getRandomColor } from "../../utils/Color";
-import { Changes, MapValueType, TableChangesRepository } from "../../repo/TableChangesRepository";
+import {
+	Changes,
+	MapValueType,
+	CellChangeType,
+	TableChangesRepository,
+	RowChangeType,
+} from "../../repo/TableChangesRepository";
 import { GuardValue } from "../../../library/guard/GuardValue";
 import { GuardBool } from "../../../library/guard/values/GuardBool";
 import { GuardDateTime } from "../../../library/guard/values/GuardDateTime";
 import { GuardInt, GuardNumbers } from "../../../library/guard/values/GuardNumbers";
 import { useContextMenu } from "../ContextMenuProvider";
 import { useClipboard } from "@mantine/hooks";
-import { IconTablePlus } from "@tabler/icons-react";
+import {
+	IconCaretDown,
+	IconCaretDownFilled,
+	IconDropletDown,
+	IconTablePlus,
+	IconTrash,
+} from "@tabler/icons-react";
 import { GuardModelInput } from "@/library/guard/GuardModel";
 const TableContext = createContext<TableManager | null>(null);
 //Wrapper
@@ -48,6 +63,9 @@ export function useTable() {
 	return ctx;
 }
 const header = css({
+	position: "sticky",
+	top: 0,
+	zIndex: 1,
 	backgroundColor: "#f0f0f0",
 	borderBottom: "3px solid #000",
 });
@@ -60,12 +78,14 @@ const cell = css({
 });
 const actionCell = css(cell, {
 	//padding: "0.25em",
-	width: "4em",
-	maxWidth: "4em",
+	//width: "4em",
+	paddingInline: "0.5em",
+	width: "auto",
+	//maxWidth: "4em",
 	backgroundColor: "#ffffff",
 });
 const readOnlyCell = css(cell, {
-	backgroundColor: "#f0f0f0",
+	backgroundColor: "#f0f0f099",
 });
 const dataCell = css(cell, {
 	overflow: "visible",
@@ -99,7 +119,7 @@ export function TableProvider(props: TableProviderProps) {
 
 	useEffect(() => {
 		const doc = new Y.Doc();
-		const wsProvider = new WebsocketProvider("ws://localhost:1234", "test-room", doc);
+		const wsProvider = new WebsocketProvider("ws://localhost:8080/yws", "test-room", doc);
 		wsProvider.on("status", (event: { status: "disconnected" | "connecting" | "connected" }) => {
 			if (event.status === "connected") {
 			}
@@ -126,6 +146,8 @@ export function TableProvider(props: TableProviderProps) {
 		console.dir(users);
 	}, [users]);
 	const [selectedCell, setSelectedCell] = useState<CellLocation | null>(null);
+
+	const [selectedRows, setSelectedRows] = useState<string[]>([]);
 	return (
 		<>
 			<Group>
@@ -163,8 +185,27 @@ export function TableProvider(props: TableProviderProps) {
 					<tbody>
 						{data.map((o, i) => {
 							return (
-								<tr key={o._id}>
-									<td className={actionCell}>a</td>
+								<tr
+									key={o._id}
+									className={changes?.deletions.includes(o._id) ? css({ backgroundColor: "#ffcccc" }) : ""}
+								>
+									<ActionCell
+										changed={changes?.isChangedRow(o._id) ?? null}
+										selected={selectedRows.includes(o._id)}
+										onChange={(v) => {
+											if (v) {
+												setSelectedRows((s) => [...s, o._id]);
+											} else {
+												setSelectedRows((s) => s.filter((r) => r !== o._id));
+											}
+										}}
+										onRowRecover={() => {
+											tableChangesRepo.current?.recoverRow(o._id);
+										}}
+										onRowDelete={() => {
+											tableChangesRepo.current?.deleteRow(o._id);
+										}}
+									/>
 									{Object.entries(mockModel.modelSchema).map(([key, field]) => {
 										const loc: CellLocation = {
 											id: o._id,
@@ -178,10 +219,13 @@ export function TableProvider(props: TableProviderProps) {
 												</td>
 											);
 										}
-										const v = changes === null || !changes?.isChanged(loc) ? value : changes.getValue(loc);
+										const v =
+											changes === null || !changes?.isChanged(loc) || changes?.isChanged(loc) === "delete"
+												? value
+												: changes.getValue(loc);
 										return (
 											<TableDataCell
-												changed={changes === null ? false : changes.isChanged(loc) !== null}
+												changed={changes === null ? null : changes.isChanged(loc)}
 												loc={loc}
 												key={key}
 												field={field}
@@ -209,6 +253,7 @@ export function TableProvider(props: TableProviderProps) {
 													tableChangesRepo.current?.removeCellChange(loc);
 												}}
 												onValueChanged={(v, old) => {
+													if (changes?.isChangedRow(loc.id) === "delete") return;
 													if (!field._isFreeEdit || v === undefined || v === null) {
 														console.log("not free", v);
 														if (tableChangesRepo.current?.update(loc, v) === false) {
@@ -244,8 +289,26 @@ export function TableProvider(props: TableProviderProps) {
 						})}
 						{changes?.addtions &&
 							Object.entries(changes.addtions).map(([id, addition]) => (
-								<tr key={id}>
-									<td className={actionCell}>a</td>
+								<tr
+									key={id}
+									className={css({
+										backgroundColor: "#ccffcc",
+									})}
+								>
+									<ActionCell
+										changed={changes?.isChangedRow(id)}
+										selected={selectedRows.includes(id)}
+										onChange={(v) => {
+											if (v) {
+												setSelectedRows((s) => [...s, id]);
+											} else {
+												setSelectedRows((s) => s.filter((r) => r !== id));
+											}
+										}}
+										onRowDelete={() => {
+											tableChangesRepo.current?.deleteRow(id);
+										}}
+									/>
 									{Object.entries(mockModel.modelSchema).map(([key, field]) => {
 										const loc: CellLocation = {
 											id: id,
@@ -262,7 +325,7 @@ export function TableProvider(props: TableProviderProps) {
 										const v = changes === null || !changes?.isChanged(loc) ? value : changes.getValue(loc);
 										return (
 											<TableDataCell
-												changed={changes === null ? false : changes.isChanged(loc) !== null}
+												changed={"add"}
 												loc={loc}
 												key={key}
 												field={field}
@@ -287,24 +350,23 @@ export function TableProvider(props: TableProviderProps) {
 													});
 												}}
 												onValueReset={() => {
-													tableChangesRepo.current?.removeCellChange(loc);
+													tableChangesRepo.current?.update(
+														loc,
+														field instanceof GuardValue && field._default ? undefined : null,
+													);
 												}}
 												onValueChanged={(v, old) => {
 													if (!field._isFreeEdit || v === undefined || v === null) {
 														console.log("not free", v);
 														if (tableChangesRepo.current?.update(loc, v) === false) {
-															tableChangesRepo.current?.addChange(loc, {
-																new: v,
-															});
+															throw new Error("illigal");
 														}
 														return;
 													}
 													const yText =
 														(tableChangesRepo.current?.getValue(loc) as Y.Text | null | undefined) ?? null;
 													if (yText === null) {
-														tableChangesRepo.current?.addChange(loc, {
-															new: new Y.Text(v),
-														});
+														tableChangesRepo.current?.update(loc, new Y.Text(v));
 														return;
 													}
 													let count = 0;
@@ -317,7 +379,8 @@ export function TableProvider(props: TableProviderProps) {
 														count += part.value.length;
 													}
 												}}
-											/>)
+											/>
+										);
 									})}
 								</tr>
 							))}
@@ -330,11 +393,11 @@ export function TableProvider(props: TableProviderProps) {
 					onClick={() => {
 						tableChangesRepo.current?.addAddition(
 							uuidv4(),
-							(Object.fromEntries(
+							Object.fromEntries(
 								Object.entries(mockModel.modelSchema).map(([key, field]) => {
 									return [key, field instanceof GuardValue && field._default ? undefined : null];
-								})
-							) as {[K in keyof GuardModelInput<typeof mockModel>]: MapValueType}),
+								}),
+							) as { [K in keyof GuardModelInput<typeof mockModel>]: MapValueType },
 						);
 					}}
 				>
@@ -345,11 +408,54 @@ export function TableProvider(props: TableProviderProps) {
 	);
 }
 
+type ActionCellProps = {
+	selected: boolean;
+	changed: RowChangeType | null;
+	onChange: (v: boolean) => void;
+	onRowDelete: () => void;
+	onRowRecover?: () => void;
+};
+export function ActionCell(props: ActionCellProps) {
+	return (
+		<td className={actionCell}>
+			<Group gap={1}>
+				<Checkbox
+					checked={props.selected}
+					onChange={(e) => {
+						props.onChange(e.currentTarget.checked);
+					}}
+				/>
+				<Menu shadow="md">
+					<Menu.Target>
+						<ActionIcon variant="subtle" size={"sm"}>
+							<IconCaretDownFilled style={{ width: "70%", height: "70%" }} stroke={1.5} />
+						</ActionIcon>
+					</Menu.Target>
+					<Menu.Dropdown>
+						<Menu.Label>列の操作</Menu.Label>
+						{props.changed === "delete" ? (
+							<Menu.Item onClick={() => props?.onRowRecover?.()}>列の削除をやめる</Menu.Item>
+						) : (
+							<Menu.Item
+								color="red"
+								leftSection={<IconTrash style={{ width: rem(14), height: rem(14) }} />}
+								onClick={() => props.onRowDelete()}
+							>
+								列の削除
+							</Menu.Item>
+						)}
+					</Menu.Dropdown>
+				</Menu>
+			</Group>
+		</td>
+	);
+}
+
 type TableDataCellProps = {
 	value: string | null | undefined;
 	field: GuardField;
 	loc: CellLocation;
-	changed: boolean;
+	changed: CellChangeType | null;
 	selected?: string;
 	selectingUsers: {
 		name: string;
@@ -364,7 +470,7 @@ function TableDataCell(props: TableDataCellProps) {
 	const [editing, setEditing] = useState(false);
 	const { copy } = useClipboard();
 	const ref = useContextMenu<HTMLTableCellElement>(
-		(c) => (
+		(close) => (
 			<Paper shadow="sm" withBorder p={"0.5rem"} style={{ minWidth: "5rem" }}>
 				<Text>メニュー</Text>
 				<Divider my={5} />
@@ -374,10 +480,10 @@ function TableDataCell(props: TableDataCellProps) {
 						radius={"xs"}
 						size="compact-md"
 						variant="outline"
-						color="default"
+						color="subtle"
 						onClick={() => {
 							copy(props.value ?? "");
-							c();
+							close();
 						}}
 					>
 						値をコピー
@@ -387,10 +493,10 @@ function TableDataCell(props: TableDataCellProps) {
 							fullWidth
 							radius={"xs"}
 							size="compact-md"
-							variant="light"
+							variant="subtle"
 							onClick={() => {
 								props.onValueChanged?.(null, props.value);
-								c();
+								close();
 							}}
 						>
 							値を「空」にする
@@ -401,16 +507,16 @@ function TableDataCell(props: TableDataCellProps) {
 							fullWidth
 							radius={"xs"}
 							size="compact-md"
-							variant="light"
+							variant="subtle"
 							onClick={() => {
 								props.onValueChanged?.(undefined, props.value);
-								c();
+								close();
 							}}
 						>
 							値をデフォルトの「{props.field._default}」にする
 						</Button>
 					)}
-					{props.changed && (
+					{props.changed && props.changed !== "delete" && (
 						<Button
 							fullWidth
 							radius={"xs"}
@@ -419,10 +525,10 @@ function TableDataCell(props: TableDataCellProps) {
 							color="red"
 							onClick={() => {
 								props.onValueReset?.();
-								c();
+								close();
 							}}
 						>
-							変更をもとの値に戻す
+							変更をもとに戻す
 						</Button>
 					)}
 				</Stack>
@@ -441,7 +547,7 @@ function TableDataCell(props: TableDataCellProps) {
 		// biome-ignore lint/a11y/useKeyWithClickEvents: ハッカソンでアクセシビリティは後回し
 		<td
 			className={`${props.selected ? focusedDataCell(props.selected) : dataCell} ${
-				props.changed ? changedCell : ""
+				props.changed === "change" ? changedCell : ""
 			}`}
 			onClick={(e) => {
 				if (editing) return;
@@ -590,7 +696,7 @@ function GuardFieldInput({ field, value, ...props }: GuardFieldInputProps) {
 				size="100%"
 				rightSectionWidth={"auto"}
 				variant="unstyled"
-				value={value}
+				value={value ? Number(value) : undefined}
 				min={field.minValue}
 				max={field.maxValue}
 				allowDecimal={!(field instanceof GuardInt)}
