@@ -23,6 +23,7 @@ import {
 	Menu,
 	ActionIcon,
 	rem,
+	Space,
 } from "@mantine/core";
 import { DatePickerInput, DateTimePicker } from "@mantine/dates";
 import { AbsoluteCellPosition, mockDatas, mockModel } from "./TableDevTest";
@@ -52,7 +53,8 @@ import {
 	IconTablePlus,
 	IconTrash,
 } from "@tabler/icons-react";
-import { GuardModelInput } from "@/library/guard/GuardModel";
+import { GuardModel, GuardModelBase, GuardModelInput } from "@/library/guard/GuardModel";
+import { useUser } from "../UserProvider";
 const TableContext = createContext<TableManager | null>(null);
 //Wrapper
 export function useTable() {
@@ -104,17 +106,17 @@ export type Row = {
 	name: string;
 	type: ZodTypeAny;
 };
-type TableProviderProps = {
-	rows: Row[];
-} & PropsWithChildren;
+type TableProviderProps<M extends GuardModelBase> = {
+	model:M
+};
 const data = mockModel.injectIdList(mockDatas);
 type CellLocation = AbsoluteCellPosition<typeof mockModel>;
-export function TableProvider(props: TableProviderProps) {
+export function TableProvider<M extends GuardModelBase>({ model,...props}: TableProviderProps<M>) {
 	const userRepo = useRef<UserRepository | null>(null);
 	const tableChangesRepo = useRef<TableChangesRepository<typeof mockModel> | null>(null);
 	const [user, setUser] = useState<User | null>(null);
 	const [users, setUsers] = useState<User[]>([]);
-
+	const authUser = useUser();
 	const [changes, setChanges] = useState<Changes<typeof mockModel> | null>(null);
 
 	useEffect(() => {
@@ -126,7 +128,7 @@ export function TableProvider(props: TableProviderProps) {
 		});
 
 		userRepo.current = new UserRepository(wsProvider.awareness, {
-			name: getRandomName().slice(0, 3),
+			name: authUser.name ?? "???",
 			color: getRandomColor(),
 		});
 		setUser(userRepo.current.getUser());
@@ -141,21 +143,30 @@ export function TableProvider(props: TableProviderProps) {
 				setChanges(tableChangesRepo.current.getState());
 			}
 		});
-	}, []);
+	}, [authUser]);
 	useEffect(() => {
 		console.dir(users);
 	}, [users]);
 	const [selectedCell, setSelectedCell] = useState<CellLocation | null>(null);
-
 	const [selectedRows, setSelectedRows] = useState<string[]>([]);
 	return (
-		<>
-			<Group>
-				{users.map((u) => (
-					<Avatar src={null} alt={u.user.name} color={u.user.color} key={u.user._uid}>
-						{u.user.name}
-					</Avatar>
-				))}
+		<Box maw={"100%"}>
+			<Group justify="space-between" w={"100%"} py={"md"}>
+				<Avatar.Group>
+					{users
+						.filter((u) => u.user._uid !== user?.user._uid)
+						.slice(0, 5)
+						.map((u) => (
+							<Avatar src={null} alt={u.user.name} color={u.user.color} key={u.user._uid}>
+								{u.user.name?.slice(0, 2)}
+							</Avatar>
+						))}
+					{users.length > 7 && (
+						<Avatar>+{users.filter((u) => u.user._uid !== user?.user._uid).length - 5}</Avatar>
+					)}
+				</Avatar.Group>
+				<Space />
+				<Button disabled={!changes?.hasChanges()}>変更を反映</Button>
 			</Group>
 			<div
 				className={css({
@@ -239,8 +250,8 @@ export function TableProvider(props: TableProviderProps) {
 													.filter(
 														(u) =>
 															u.user._uid !== user?.user._uid &&
-															u.cursor.selectedCell?.column === loc.column &&
-															u.cursor.selectedCell?.id === loc.id,
+															u.cursor?.selectedCell?.column === loc.column &&
+															u.cursor?.selectedCell?.id === loc.id,
 													)
 													.map((u) => ({ name: u.user.name, color: u.user.color }))}
 												onSelected={(l) => {
@@ -404,7 +415,7 @@ export function TableProvider(props: TableProviderProps) {
 					データを追加
 				</Button>
 			</div>
-		</>
+		</Box>
 	);
 }
 
@@ -432,16 +443,16 @@ export function ActionCell(props: ActionCellProps) {
 						</ActionIcon>
 					</Menu.Target>
 					<Menu.Dropdown>
-						<Menu.Label>列の操作</Menu.Label>
+						<Menu.Label>行の操作</Menu.Label>
 						{props.changed === "delete" ? (
-							<Menu.Item onClick={() => props?.onRowRecover?.()}>列の削除をやめる</Menu.Item>
+							<Menu.Item onClick={() => props?.onRowRecover?.()}>行の削除をやめる</Menu.Item>
 						) : (
 							<Menu.Item
 								color="red"
 								leftSection={<IconTrash style={{ width: rem(14), height: rem(14) }} />}
 								onClick={() => props.onRowDelete()}
 							>
-								列の削除
+								行の削除
 							</Menu.Item>
 						)}
 					</Menu.Dropdown>

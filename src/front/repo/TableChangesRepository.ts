@@ -22,6 +22,7 @@ export type Changes<T extends GuardModel<string, GuardSchema<string>>> = {
 	getValue(location: AbsoluteCellPosition<T>): MapValueType;
 	isChangedRow(id:string): RowChangeType|null;
 	isChanged(location: AbsoluteCellPosition<T>): CellChangeType | null;
+	hasChanges():boolean;
 };
 export class TableChangesRepository<T extends GuardModel<string, GuardSchema<string>>> {
 	deletions: Y.Array<string>;
@@ -161,6 +162,9 @@ export class TableChangesRepository<T extends GuardModel<string, GuardSchema<str
 					return "add";
 				}
 				return null;
+			},
+			hasChanges() {
+				return this.deletions.length > 0 || Object.keys(this.changes).length > 0 || Object.keys(this.addtions).length > 0;
 			},
 		};
 	}

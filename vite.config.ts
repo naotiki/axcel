@@ -16,6 +16,7 @@ export default defineConfig(({ mode }) => {
 				'/yws': {
 					target: 'ws://localhost:1234',
 					changeOrigin: false,
+					ws: true,
 					rewrite: (path) => path.replace(/^\/yws/, ''),
 				},
 			}
