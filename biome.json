@@ -13,7 +13,8 @@
 		"rules": {
 			"recommended": true
 		}
-	},"files":{
-		"ignore":[".vscode/*"]
+	},
+	"files": {
+		"ignore": [".vscode/*"]
 	}
 }

@@ -14,8 +14,6 @@ model Movie {
 	category    String
 	check    Boolean?
 	number    Int? @default(1)
-	date    DateTime?
-	dateTime    DateTime?
 }
 
 enum Status {

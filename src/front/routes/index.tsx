@@ -1,6 +1,7 @@
 import { Center, Container, Stack } from "@mantine/core";
 import { createFileRoute } from "@tanstack/react-router";
 import { Row, TableProvider } from "../components/Table/TableProvider";
+import { mockDatas, mockModel } from "../components/Table/TableDevTest";
 
 export const Route = createFileRoute("/")({
 	component: Index,
@@ -10,7 +11,7 @@ function Index() {
 		<>
 			<Container size="md" pt={5} />
 			<Stack justify="center" align="center">
-				<TableProvider  />
+				<TableProvider model={mockModel}  />
 			</Stack>
 		</>
 	);

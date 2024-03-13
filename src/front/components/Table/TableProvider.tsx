@@ -1,6 +1,6 @@
-import { createContext, PropsWithChildren, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { TableManager } from "../../model/TableManager";
-import { set, ZodTypeAny } from "zod";
+import { ZodTypeAny, string } from "zod";
 import { css } from "@emotion/css";
 import * as Diff from "diff";
 import { v4 as uuidv4 } from "uuid";
@@ -24,6 +24,7 @@ import {
 	ActionIcon,
 	rem,
 	Space,
+	HoverCard,
 } from "@mantine/core";
 import { DatePickerInput, DateTimePicker } from "@mantine/dates";
 import { AbsoluteCellPosition, mockDatas, mockModel } from "./TableDevTest";
@@ -31,7 +32,7 @@ import { GuardField } from "../../../library/guard/guard";
 import { GuardEnum } from "../../../library/guard/values/GuardEnum";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
-import { getRandomName, User, UserRepository } from "../../repo/UserRepository";
+import { User, UserRepository } from "../../repo/UserRepository";
 import { getRandomColor } from "../../utils/Color";
 import {
 	Changes,
@@ -39,7 +40,6 @@ import {
 	CellChangeType,
 	TableChangesRepository,
 	RowChangeType,
-	MetaData,
 	genSelectorId,
 	genCellId,
 } from "../../repo/TableChangesRepository";
@@ -48,19 +48,20 @@ import { GuardBool } from "../../../library/guard/values/GuardBool";
 import { GuardDateTime } from "../../../library/guard/values/GuardDateTime";
 import { GuardInt, GuardNumbers } from "../../../library/guard/values/GuardNumbers";
 import { useContextMenu } from "../ContextMenuProvider";
-import { useClipboard } from "@mantine/hooks";
+import { useClipboard, useDisclosure } from "@mantine/hooks";
+import { IconCaretDownFilled, IconEdit, IconPlus, IconTablePlus, IconTrash } from "@tabler/icons-react";
 import {
-	IconCaretDown,
-	IconCaretDownFilled,
-	IconDropletDown,
-	IconEdit,
-	IconPlus,
-	IconTablePlus,
-	IconTrash,
-} from "@tabler/icons-react";
-import { GuardModel, GuardModelBase, GuardModelInput, GuardModelSelector } from "@/library/guard/GuardModel";
+	GuardModelBase,
+	GuardModelColumn,
+	GuardModelInput,
+	GuardModelOutput,
+	GuardModelSelector,
+} from "@/library/guard/GuardModel";
 import { useUser } from "../UserProvider";
 import { IconTextWithTooltip } from "./IconTextWithTooltip";
+import React from "react";
+import { hc } from "hono/client";
+import { AxcelGet, AxcelPost } from "@/api";
 const TableContext = createContext<TableManager | null>(null);
 //Wrapper
 export function useTable() {
@@ -115,24 +116,26 @@ export type Row = {
 type TableProviderProps<M extends GuardModelBase> = {
 	model: M;
 };
-const data = mockModel.injectIdList(mockDatas);
-type CellLocation = AbsoluteCellPosition<typeof mockModel>;
+
+//type CellLocation = AbsoluteCellPosition<typeof mockModel>;
+
 export function TableProvider<M extends GuardModelBase>({ model, ...props }: TableProviderProps<M>) {
-	const userRepo = useRef<UserRepository | null>(null);
-	const tableChangesRepo = useRef<TableChangesRepository<typeof mockModel> | null>(null);
-	const [user, setUser] = useState<User | null>(null);
-	const [users, setUsers] = useState<User[]>([]);
+	const userRepo = useRef<UserRepository<M> | null>(null);
+	const tableChangesRepo = useRef<TableChangesRepository<M> | null>(null);
+	const [user, setUser] = useState<User<M> | null>(null);
+	const [users, setUsers] = useState<User<M>[]>([]);
 	const authUser = useUser();
-	const [changes, setChanges] = useState<Changes<typeof mockModel> | null>(null);
+	const [changes, setChanges] = useState<Changes<M> | null>(null);
 	const [locked, setLocked] = useState<boolean | null>(null);
+	const lastUpdated = useRef<number | null>(null);
+	const [data, setData] = useState(model.injectIdList(mockDatas));
 	useEffect(() => {
 		const doc = new Y.Doc();
-		const wsProvider = new WebsocketProvider("ws://localhost:8080/yws", "test-room", doc);
+		const wsProvider = new WebsocketProvider("ws://localhost:8080/yws", model.name, doc);
 		wsProvider.on("status", (event: { status: "disconnected" | "connecting" | "connected" }) => {
 			if (event.status === "connected") {
 			}
 		});
-
 		userRepo.current = new UserRepository(wsProvider.awareness, {
 			name: authUser.name ?? "???",
 			color: getRandomColor(),
@@ -140,24 +143,42 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 		setUser(userRepo.current.getUser());
 		setUsers(userRepo.current.getUsers());
 		userRepo.current.onUserChanged((users) => {
-			//users.map((u) => u.meta?.locked??false).some((l) => l) ? setLocked(true) : setLocked(false);
 			setUsers(users);
 		});
-
-		tableChangesRepo.current = new TableChangesRepository<typeof mockModel>(doc);
+		hc<AxcelGet>("http://localhost:8080/api")
+			.axcel[":model"].$get({ param: { model: model.name } })
+			.then(async (res) => {
+				const data = await res.json();
+				if (Array.isArray(data)) {
+					setData(model.injectIdList(data as GuardModelOutput<M>[]));
+					lastUpdated.current = Date.now();
+				}
+			});
+		tableChangesRepo.current = new TableChangesRepository<M>(doc);
 		tableChangesRepo.current.onChanges((type) => {
 			if (tableChangesRepo.current !== null) {
-				setLocked(tableChangesRepo.current.getMetaData().locked ?? false);
+				const meta = tableChangesRepo.current.getMetaData();
+				setLocked(meta.locked ?? false);
 				setChanges(tableChangesRepo.current.getState());
-				console.log(tableChangesRepo.current.getState());
+				console.log(meta.updatedAt, lastUpdated.current);
+				if (meta.updatedAt && lastUpdated.current && meta.updatedAt > lastUpdated.current) {
+					hc<AxcelGet>("http://localhost:8080/api")
+						.axcel[":model"].$get({ param: { model: model.name } })
+						.then(async (res) => {
+							const data = await res.json();
+							if (Array.isArray(data)) {
+								setData(model.injectIdList(data as GuardModelOutput<M>[]));
+								lastUpdated.current = Date.now();
+							}
+						});
+				}
 			}
 		});
-	}, [authUser]);
-	useEffect(() => {
-		console.dir(users);
-	}, [users]);
+	}, [authUser, model]);
 	const [selectedCell, setSelectedCell] = useState<string | null>(null);
 	const [selectedRows, setSelectedRows] = useState<string[]>([]);
+	const [opened, { close, open }] = useDisclosure(false);
+	const [showValidationErrorText, setShowValidationErrorText] = useState(false);
 	return (
 		<Box maw={"100%"}>
 			<Group justify="space-between" w={"100%"} py={"md"}>
@@ -175,6 +196,7 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 					)}
 				</Avatar.Group>
 				<Space />
+
 				<Group>
 					<IconTextWithTooltip
 						icon={<IconEdit />}
@@ -194,9 +216,62 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 						tooltip={`削除 : ${changes?.deletions.length ?? 0} 行`}
 						color="red"
 					/>
-					<Button loading={locked ?? false} disabled={!changes?.hasChanges()} onClick={() => {}}>
-						変更を反映
-					</Button>
+					<Popover
+						opened={opened || showValidationErrorText}
+						withArrow
+						shadow="md"
+						width={400}
+						position="top"
+					>
+						<Popover.Target>
+							<Button
+								onMouseEnter={open}
+								onMouseLeave={close}
+								loading={locked ?? false}
+								disabled={!changes?.hasChanges()}
+								onClick={async () => {
+									setLocked(true);
+									const changes = tableChangesRepo.current?.getState();
+									if (!changes?.hasChanges()) return;
+									for (const [key, field] of Object.entries(model.modelSchema)) {
+										const strings = Object.entries(changes.addtions)
+											.map(([_, v]) => v[key as keyof M["modelSchema"]])
+											.concat(
+												Object.values(changes.changes)
+													.filter((v) => v.column === key)
+													.map((v) => v.new),
+											);
+										for (const value of strings) {
+											if (field.validate(value)) {
+												setShowValidationErrorText(true);
+												setTimeout(() => {
+													setShowValidationErrorText(false);
+												}, 5000);
+												setLocked(false);
+												return;
+											}
+										}
+									}
+									const result = await hc<AxcelPost>("http://localhost:8080/api").axcel[":model"].$post({
+										param: {
+											model: model.name,
+										},
+									});
+									console.dir(result);
+									setLocked(false);
+								}}
+							>
+								変更を反映
+							</Button>
+						</Popover.Target>
+						<Popover.Dropdown>
+							<Text>
+								{showValidationErrorText
+									? "入力値にエラーがあるため反映できませんでした。"
+									: "変更をデータベースに反映します。反映中はロックが掛かり、変更を加えられなくなります"}
+							</Text>
+						</Popover.Dropdown>
+					</Popover>
 				</Group>
 			</Group>
 			<div
@@ -215,7 +290,7 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 					<thead className={header}>
 						<tr>
 							<th className={actionCell}>操作</th>
-							{Object.entries(mockModel.modelSchema).map(([key, value]) => {
+							{Object.entries(model.modelSchema).map(([key, value]) => {
 								return (
 									<th className={cell} key={key}>
 										{value.attrs.label ?? key}
@@ -249,12 +324,12 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 											tableChangesRepo.current?.deleteRow(o.__id);
 										}}
 									/>
-									{Object.entries(mockModel.modelSchema).map(([key, field]) => {
-										const loc: CellLocation = {
+									{Object.entries(model.modelSchema).map(([key, field]) => {
+										const loc: AbsoluteCellPosition<M> = {
 											id: o.__id,
-											column: key as keyof typeof mockModel.modelSchema,
+											column: key as GuardModelColumn<M>,
 										};
-										const value = o.data[key as keyof typeof mockModel.modelSchema];
+										const value = o.data[key as GuardModelColumn<M>];
 										if (field._readonly) {
 											return (
 												<td className={readOnlyCell} key={key}>
@@ -299,6 +374,7 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 														console.log("not free", v);
 														if (tableChangesRepo.current?.update(loc, v) === false) {
 															tableChangesRepo.current?.addChange(loc, {
+																column: loc.column,
 																__id: loc.id,
 																new: v,
 															});
@@ -309,6 +385,7 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 														(tableChangesRepo.current?.getValue(loc) as Y.Text | null | undefined) ?? null;
 													if (yText === null) {
 														tableChangesRepo.current?.addChange(loc, {
+															column: loc.column,
 															__id: loc.id,
 															new: new Y.Text(v),
 														});
@@ -332,7 +409,7 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 						})}
 						{changes?.addtions &&
 							Object.entries(changes.addtions).map(([id, addition]) => {
-								const selector = { __newuuid: id };
+								const selector = { __newuuid: id } as GuardModelSelector<M>;
 								const sId = genSelectorId(selector);
 								return (
 									<tr
@@ -355,12 +432,12 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 												tableChangesRepo.current?.deleteRow(selector);
 											}}
 										/>
-										{Object.entries(mockModel.modelSchema).map(([key, field]) => {
-											const loc: CellLocation = {
+										{Object.entries(model.modelSchema).map(([key, field]) => {
+											const loc: AbsoluteCellPosition<M> = {
 												id: selector,
-												column: key as keyof typeof mockModel.modelSchema,
+												column: key as GuardModelColumn<M>,
 											};
-											const value = addition[key as keyof typeof mockModel.modelSchema];
+											const value = addition[key as keyof M["modelSchema"]];
 											if (field._readonly) {
 												return (
 													<td className={readOnlyCell} key={key}>
@@ -370,7 +447,7 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 											}
 											const v = changes === null || !changes?.isChanged(loc) ? value : changes.getValue(loc);
 											return (
-												<TableDataCell
+												<TableDataCell<M>
 													changed={"add"}
 													loc={loc}
 													key={key}
@@ -439,10 +516,10 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 						tableChangesRepo.current?.addAddition(
 							uuidv4(),
 							Object.fromEntries(
-								Object.entries(mockModel.modelSchema).map(([key, field]) => {
+								Object.entries(model.modelSchema).map(([key, field]) => {
 									return [key, field instanceof GuardValue && field._default ? undefined : null];
 								}),
-							) as { [K in keyof GuardModelInput<typeof mockModel>]: MapValueType },
+							) as { [K in keyof GuardModelInput<M>]: MapValueType },
 						);
 					}}
 				>
@@ -496,10 +573,10 @@ export function ActionCell(props: ActionCellProps) {
 	);
 }
 
-type TableDataCellProps = {
+type TableDataCellProps<M extends GuardModelBase> = {
 	value: string | null | undefined;
 	field: GuardField;
-	loc: CellLocation;
+	loc: AbsoluteCellPosition<M>;
 	changed: CellChangeType | null;
 	selected?: string;
 	selectingUsers: {
@@ -508,10 +585,10 @@ type TableDataCellProps = {
 	}[];
 	onValueChanged: (v: string | null | undefined, old: string | null | undefined) => void;
 	onValueReset: () => void;
-	onSelected: (l: CellLocation) => void;
+	onSelected: (l: AbsoluteCellPosition<M>) => void;
 };
 
-function TableDataCell(props: TableDataCellProps) {
+function TableDataCell<M extends GuardModelBase>(props: TableDataCellProps<M>) {
 	const [editing, setEditing] = useState(false);
 	const { copy } = useClipboard();
 	const ref = useContextMenu<HTMLTableCellElement>(
@@ -765,7 +842,7 @@ type ErrorMakerProps = {
 	errors?: string[];
 	opened: boolean;
 };
-function ErrorMaker({ errors, opened }: ErrorMakerProps) {
+const ErrorMaker = React.memo<ErrorMakerProps>(({ errors, opened }: ErrorMakerProps) => {
 	if (errors?.length === 0 || !errors) return <></>;
 	return (
 		<div
@@ -802,4 +879,4 @@ function ErrorMaker({ errors, opened }: ErrorMakerProps) {
 			</Popover>
 		</div>
 	);
-}
+});

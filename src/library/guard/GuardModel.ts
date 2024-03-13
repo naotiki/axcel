@@ -3,7 +3,6 @@ import { GuardHasDefault, GuardOptional, GuardValue } from "./GuardValue";
 import { GuardField, GuardRelation, GuardRelationList } from "./guard";
 import { FluentOperation } from "@prisma/client/runtime/library";
 
-
 export class GuardModel<T extends string, S extends GuardSchema<T>> {
 	name: string;
 	modelSchema: S;
@@ -14,7 +13,8 @@ export class GuardModel<T extends string, S extends GuardSchema<T>> {
 	}
 	check() {
 		for (const key in this.modelSchema) {
-			if(key.startsWith("__")) throw new Error(`GuardSchemaError: ${this.name}.${key} ---\n\tField name can not start with "__"`);
+			if (key.startsWith("__"))
+				throw new Error(`GuardSchemaError: ${this.name}.${key} ---\n\tField name can not start with "__"`);
 			const f = this.modelSchema[key];
 			if (f instanceof GuardValue) {
 				const err = f.checkDef();
@@ -24,12 +24,15 @@ export class GuardModel<T extends string, S extends GuardSchema<T>> {
 			}
 		}
 	}
+	getIdEntries() {
+		return Object.entries(this.modelSchema).filter(([k, v]) => v instanceof GuardValue && v._id);
+	}
 	//完全識別用IDを付与
 	injectId(value: GuardModelOutput<GuardModel<T, S>>) {
 		return {
-			__id: Object.fromEntries(Object.entries(this.modelSchema)
-			.filter(([k, v]) => v instanceof GuardValue && v._id)
-			.map(([k, v]) => [k,value[k as keyof typeof value]])) as GuardModelSelector<this>,
+			__id: Object.fromEntries(
+				this.getIdEntries().map(([k, v]) => [k, value[k as keyof typeof value]]),
+			) as GuardModelSelector<this>,
 			data: {
 				...value,
 			},
@@ -40,12 +43,10 @@ export class GuardModel<T extends string, S extends GuardSchema<T>> {
 	}
 }
 
-
-
 export type GuardModelSelector<T extends GuardModel<string, GuardSchema<string>>> = {
-	[K in keyof GuardModelOutput<T>]?:  GuardModelOutput<T>[K];
-}&{
-	__newuuid?:string
+	[K in keyof GuardModelOutput<T>]?: GuardModelOutput<T>[K];
+} & {
+	__newuuid?: string;
 };
 
 export type GuardSchema<T extends string = string> = { [_ in T]: GuardField };

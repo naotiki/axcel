@@ -2,21 +2,22 @@ import * as Y from "yjs";
 import * as awarenessProtocol from "y-protocols/awareness";
 import { v4 as uuidv4 } from "uuid";
 import { AbsoluteCellPosition, mockModel } from "../components/Table/TableDevTest";
+import { GuardModel, GuardModelBase } from "@/library/guard/GuardModel";
 type UserData = {
 	_uid: string;
 	name: string;
 	color: string;
 };
-type UserCursor = {
-	selectedCell?: AbsoluteCellPosition<typeof mockModel>;
+type UserCursor<M extends GuardModelBase> = {
+	selectedCell?: AbsoluteCellPosition<M>;
 	relativeCursorPos?: Y.RelativePosition;
 };
 type UserMetaData = {
 	locked: boolean;
 };
-export type User = {
+export type User<M extends GuardModelBase> = {
 	user: UserData;
-	cursor?: UserCursor;
+	cursor?: UserCursor<M>;
 	meta?: UserMetaData;
 };
 
@@ -52,15 +53,15 @@ export function getRandomName() {
 	return names[Math.floor(Math.random() * names.length)];
 }
 
-export class UserRepository {
+export class UserRepository<M extends GuardModelBase> {
 	private awareness: awarenessProtocol.Awareness;
-	private user: User;
-	getUser(): Readonly<User> {
+	private user: User<M>;
+	getUser(): Readonly<User<M>> {
 		return this.user;
 	}
 	constructor(awareness: awarenessProtocol.Awareness, user: { name: string; color: string }) {
 		this.awareness = awareness;
-		const u:Required<User> = {
+		const u:Required<User<M>> = {
 			user: {
 				_uid: uuidv4(),
 				name: user.name,
@@ -83,7 +84,7 @@ export class UserRepository {
 			meta: this.user.meta,
 		};
 	}
-	updateUserCursor(cursor: UserCursor) {
+	updateUserCursor(cursor: UserCursor<M>) {
 		this.awareness.setLocalStateField("cursor", { ...cursor });
 		this.user = {
 			user: this.user.user,
@@ -101,24 +102,24 @@ export class UserRepository {
 	}
 
 	onUserChanged(
-		callback: (users: User[], changeUIDs: { added: number[]; updated: number[]; removed: number[] }) => void,
+		callback: (users: User<M>[], changeUIDs: { added: number[]; updated: number[]; removed: number[] }) => void,
 	) {
 		this.awareness.on(
 			"change",
 			(changes: { added: number[]; updated: number[]; removed: number[] }) => {
-				this.user = this.awareness.getLocalState() as User;
+				this.user = this.awareness.getLocalState() as User<M>;
 				callback(this.getUsers(), changes);
 			},
 		);
 	}
 	getUserByNumber(number: number) {
-		return this.awareness.getStates().get(number) as User;
+		return this.awareness.getStates().get(number) as User<M>;
 	}
 	getOtherUsers() {
 		return this.getUsers().filter((u) => u.user._uid !== this.user.user._uid);
 	}
 	getUsers() {
 		//APIからの接続は除外
-		return Array.from(this.awareness.getStates().values()).filter(u=>u.user) as User[];
+		return Array.from(this.awareness.getStates().values()).filter(u=>u.user) as User<M>[];
 	}
 }

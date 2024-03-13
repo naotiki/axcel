@@ -28,7 +28,7 @@ export class GuardGenerator {
 			for (const k in model.modelSchema) {
 				const field = model.modelSchema[k];
 				if (field instanceof GuardRelation) {
-					w.write(`\t${k}    ${field.model.name}`);
+					w.write(`\t${k}    ${field.model.name[0].toUpperCase() + field.model.name.slice(1)}`);
 					w.write(
 						` @relation(fields: [${Object.keys(field.fields).join(", ")}],references: [${field.relations.join(
 							", ",
@@ -44,7 +44,7 @@ export class GuardGenerator {
 						);
 					}
 				} else if (field instanceof GuardRelationList) {
-					w.write(`\t${k}    ${field.model.name}[]`);
+					w.write(`\t${k}    ${field.model.name[0].toUpperCase() + field.model.name.slice(1)}[]`);
 				} else if (field instanceof GuardValue) {
 					let typeName: string = field.prismaType;
 					if (field instanceof GuardEnum) {
@@ -81,7 +81,7 @@ export class GuardGenerator {
 				for (const k in m.modelSchema) {
 					const f = m.modelSchema[k];
 					if ((f instanceof GuardRelation || f instanceof GuardRelationList) && f.model === model) {
-						w.write(`\t${m.name.toLowerCase()}    ${m.name}[]\n`);
+						w.write(`\t${m.name.toLowerCase()}    ${m.name[0].toUpperCase() + m.name.slice(1)}[]\n`);
 					}
 				}
 			}

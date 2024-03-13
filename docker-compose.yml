@@ -1,0 +1,15 @@
+version: '3'
+services:
+  db:
+    image: postgres:15.3-alpine
+    ports:
+      - "15432:5432"
+    volumes:
+      #- "./db_data/init:/docker-entrypoint-initdb.d"
+      - "postgres_db:/var/lib/postgresql/data"
+    environment:
+      POSTGRES_USER: webapp
+      POSTGRES_PASSWORD: webapp
+      POSTGRES_DB: webapp
+volumes:
+  postgres_db:
