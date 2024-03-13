@@ -3,7 +3,7 @@ import { GuardBool } from "./values/GuardBool";
 import { GuardDecimal, GuardFloat, GuardInt } from "./values/GuardNumbers";
 import { GuardEnum } from "./values/GuardEnum";
 import { GuardDateTime } from "./values/GuardDateTime";
-import { GuardModel, GuardSchema } from "./GuardModel";
+import { GuardModel, GuardModelBase, GuardSchema } from "./GuardModel";
 import { GuardList } from "./values/GuardList";
 import { GuardValue } from "./GuardValue";
 import { BunFile } from "bun";
@@ -23,7 +23,8 @@ export class GuardGenerator {
 		for (const model of this.models) {
 			model.check();
 			const addContents: string[] = [];
-			w.write(`model ${model.name} {\n`);
+			// to Modelname
+			w.write(`model ${model.name[0].toUpperCase() + model.name.slice(1)} {\n`);
 			for (const k in model.modelSchema) {
 				const field = model.modelSchema[k];
 				if (field instanceof GuardRelation) {
@@ -92,7 +93,7 @@ export class GuardGenerator {
 		} //loop end model
 		w.end();
 	}
-	models: GuardModel<string,{ [A in string]: GuardField }>[];
+	models: GuardModel<string, { [A in string]: GuardField }>[];
 	constructor() {
 		this.models = [];
 	}
@@ -120,14 +121,18 @@ export class GuardGenerator {
 	enum<S extends string, T extends [S, ...S[]]>(enumName: string, enumValues: T): GuardEnum<T[number]> {
 		return new GuardEnum<T[number]>(enumName, enumValues);
 	}
-	relation<T extends string,S extends GuardSchema<T>>(model: GuardModel<T,S>, fields: Record<string, GuardValueAny>, relations: T[]) {
+	relation<T extends string, S extends GuardSchema<T>>(
+		model: GuardModel<T, S>,
+		fields: Record<string, GuardValueAny>,
+		relations: T[],
+	) {
 		return new GuardRelation(model, fields, relations);
 	}
-	relationList<T extends string,S extends GuardSchema<T>>(model: GuardModel<T,S>) {
+	relationList<T extends string, S extends GuardSchema<T>>(model: GuardModel<T, S>) {
 		return new GuardRelationList(model);
 	}
-	model<T extends string,S extends GuardSchema<T>>(modelName: string, schema:S) {
-		const gm = new GuardModel<T,S>(modelName, schema);
+	model<T extends string, S extends GuardSchema<T>>(modelName: Lowercase<string>, schema: S) {
+		const gm = new GuardModel<T, S>(modelName, schema);
 		this.models.push(gm);
 		return gm;
 	}

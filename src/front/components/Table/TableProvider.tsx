@@ -1,6 +1,6 @@
 import { createContext, PropsWithChildren, useContext, useEffect, useRef, useState } from "react";
 import { TableManager } from "../../model/TableManager";
-import { ZodTypeAny } from "zod";
+import { set, ZodTypeAny } from "zod";
 import { css } from "@emotion/css";
 import * as Diff from "diff";
 import { v4 as uuidv4 } from "uuid";
@@ -39,6 +39,7 @@ import {
 	CellChangeType,
 	TableChangesRepository,
 	RowChangeType,
+	MetaData,
 } from "../../repo/TableChangesRepository";
 import { GuardValue } from "../../../library/guard/GuardValue";
 import { GuardBool } from "../../../library/guard/values/GuardBool";
@@ -50,6 +51,8 @@ import {
 	IconCaretDown,
 	IconCaretDownFilled,
 	IconDropletDown,
+	IconEdit,
+	IconPlus,
 	IconTablePlus,
 	IconTrash,
 } from "@tabler/icons-react";
@@ -107,18 +110,18 @@ export type Row = {
 	type: ZodTypeAny;
 };
 type TableProviderProps<M extends GuardModelBase> = {
-	model:M
+	model: M;
 };
 const data = mockModel.injectIdList(mockDatas);
 type CellLocation = AbsoluteCellPosition<typeof mockModel>;
-export function TableProvider<M extends GuardModelBase>({ model,...props}: TableProviderProps<M>) {
+export function TableProvider<M extends GuardModelBase>({ model, ...props }: TableProviderProps<M>) {
 	const userRepo = useRef<UserRepository | null>(null);
 	const tableChangesRepo = useRef<TableChangesRepository<typeof mockModel> | null>(null);
 	const [user, setUser] = useState<User | null>(null);
 	const [users, setUsers] = useState<User[]>([]);
 	const authUser = useUser();
 	const [changes, setChanges] = useState<Changes<typeof mockModel> | null>(null);
-
+	const [locked, setLocked] = useState<boolean|null>(null);
 	useEffect(() => {
 		const doc = new Y.Doc();
 		const wsProvider = new WebsocketProvider("ws://localhost:8080/yws", "test-room", doc);
@@ -134,12 +137,14 @@ export function TableProvider<M extends GuardModelBase>({ model,...props}: Table
 		setUser(userRepo.current.getUser());
 		setUsers(userRepo.current.getUsers());
 		userRepo.current.onUserChanged((users) => {
+			//users.map((u) => u.meta?.locked??false).some((l) => l) ? setLocked(true) : setLocked(false);
 			setUsers(users);
 		});
 
 		tableChangesRepo.current = new TableChangesRepository<typeof mockModel>(doc);
 		tableChangesRepo.current.onChanges((type) => {
 			if (tableChangesRepo.current !== null) {
+				setLocked(tableChangesRepo.current.getMetaData().locked??false);
 				setChanges(tableChangesRepo.current.getState());
 			}
 		});
@@ -166,7 +171,29 @@ export function TableProvider<M extends GuardModelBase>({ model,...props}: Table
 					)}
 				</Avatar.Group>
 				<Space />
-				<Button disabled={!changes?.hasChanges()}>変更を反映</Button>
+				<Group>
+					<Center c={"green"}>
+						<IconPlus />
+						{Object.keys(changes?.addtions ?? {}).length ?? 0}
+					</Center>
+					<Center c={"yellow"}>
+						<IconEdit />
+						{Object.keys(changes?.changes ?? {}).length ?? 0}
+					</Center>
+					<Center c={"red"}>
+						<IconTrash />
+						{changes?.deletions.length ?? 0}
+					</Center>
+					<Button
+						loading={locked??false}
+						disabled={!changes?.hasChanges()}
+						onClick={() => {
+							
+						}}
+					>
+						変更を反映
+					</Button>
+				</Group>
 			</Group>
 			<div
 				className={css({

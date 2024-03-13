@@ -25,7 +25,7 @@ app.use(
 
 app.route("/api", api);
 
-app.get("/*", (c) => {
+/* app.get("/*", (c) => {
 	return c.html(
 		renderToString(
 			<html lang="ja">
@@ -47,5 +47,5 @@ app.get("/*", (c) => {
 			</html>,
 		),
 	);
-});
+}); */
 export default  app

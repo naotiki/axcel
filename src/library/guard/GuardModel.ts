@@ -1,6 +1,8 @@
+import { Prisma, PrismaClient } from "@prisma/client";
 import { label } from "../test/gionsai";
 import { GuardHasDefault, GuardOptional, GuardValue } from "./GuardValue";
 import { GuardField, GuardRelation, GuardRelationList } from "./guard";
+import { FluentOperation, Operation } from "@prisma/client/runtime/library";
 
 export class GuardModel<T extends string, S extends GuardSchema<T>> {
 	name: string;
@@ -27,7 +29,7 @@ export class GuardModel<T extends string, S extends GuardSchema<T>> {
 			_id: Object.entries(this.modelSchema)
 				.filter(([k, v]) => v instanceof GuardValue && v._id)
 				.map(([k, v]) => value[k as keyof typeof value])
-				.join("+"),
+				.join(""),
 			data: {
 				...value,
 			},
@@ -36,7 +38,17 @@ export class GuardModel<T extends string, S extends GuardSchema<T>> {
 	injectIdList(values: GuardModelOutput<GuardModel<T, S>>[]) {
 		return values.map((v) => this.injectId(v));
 	}
+	linkPrisma<P extends { [A in FluentOperation]: (...arg:(any)[]) => unknown }>(prisma: P) {
+		(new PrismaClient()["mvie" as keyof PrismaClient] as unknown as P).create(
+
+
+		);
+	}
 }
+
+export type GuardModelSelector<T extends GuardModel<string, GuardSchema<string>>> = {
+	[K in keyof GuardModelOutput<T>]?:  GuardModelOutput<T>[K];
+};
 
 export type GuardSchema<T extends string = string> = { [_ in T]: GuardField };
 
@@ -83,9 +95,9 @@ type GuardSchemaOutput<S extends GuardSchema> = {
 };
 
 type GuardSchemaInput<S extends GuardSchema> = {
-	[K in OptionalGuardFields<S>]: GuardFieldInfer<S[K]>|null;
-}&{
-	[K in HasDefaultGuardFields<S>]?: GuardFieldInfer<S[K]>|undefined;
+	[K in OptionalGuardFields<S>]: GuardFieldInfer<S[K]> | null;
+} & {
+	[K in HasDefaultGuardFields<S>]?: GuardFieldInfer<S[K]> | undefined;
 } & {
 	[K in Exclude<keyof S, OptionalGuardFields<S> | HasDefaultGuardFields<S>>]: GuardFieldInfer<S[K]>;
 };

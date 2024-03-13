@@ -11,34 +11,68 @@ type UserCursor = {
 	selectedCell?: AbsoluteCellPosition<typeof mockModel>;
 	relativeCursorPos?: Y.RelativePosition;
 };
+type UserMetaData = {
+	locked: boolean;
+};
 export type User = {
 	user: UserData;
-	cursor: UserCursor;
+	cursor?: UserCursor;
+	meta?: UserMetaData;
 };
 
-export function getRandomName(){
-	const names = ["Alice","Bob","Charlie","David","Eve","Frank","Grace","Hannah","Ivan","Jack","Katie","Liam","Mia","Nathan","Olivia","Peter","Quinn","Rachel","Steve","Tina","Ursula","Victor","Wendy","Xander","Yvonne","Zach"];
-	return names[Math.floor(Math.random()*names.length)];
+export function getRandomName() {
+	const names = [
+		"Alice",
+		"Bob",
+		"Charlie",
+		"David",
+		"Eve",
+		"Frank",
+		"Grace",
+		"Hannah",
+		"Ivan",
+		"Jack",
+		"Katie",
+		"Liam",
+		"Mia",
+		"Nathan",
+		"Olivia",
+		"Peter",
+		"Quinn",
+		"Rachel",
+		"Steve",
+		"Tina",
+		"Ursula",
+		"Victor",
+		"Wendy",
+		"Xander",
+		"Yvonne",
+		"Zach",
+	];
+	return names[Math.floor(Math.random() * names.length)];
 }
 
 export class UserRepository {
-	awareness: awarenessProtocol.Awareness;
+	private awareness: awarenessProtocol.Awareness;
 	private user: User;
-	getUser():Readonly<User> {
+	getUser(): Readonly<User> {
 		return this.user;
 	}
 	constructor(awareness: awarenessProtocol.Awareness, user: { name: string; color: string }) {
 		this.awareness = awareness;
-		this.user = {
+		const u:Required<User> = {
 			user: {
 				_uid: uuidv4(),
 				name: user.name,
 				color: user.color,
 			},
 			cursor: {},
+			meta: { locked: false },
 		};
-		this.updateUserData(this.user.user);
-		this.updateUserCursor(this.user.cursor);
+		this.user = u;
+		this.updateUserData(u.user);
+		this.updateUserCursor(u.cursor);
+		this.updateUserMeta(u.meta);
 	}
 
 	updateUserData(userData: UserData) {
@@ -46,6 +80,7 @@ export class UserRepository {
 		this.user = {
 			user: userData,
 			cursor: this.user?.cursor ?? {},
+			meta: this.user.meta,
 		};
 	}
 	updateUserCursor(cursor: UserCursor) {
@@ -53,17 +88,26 @@ export class UserRepository {
 		this.user = {
 			user: this.user.user,
 			cursor: cursor,
+			meta: this.user.meta,
+		};
+	}
+	updateUserMeta(meta: UserMetaData) {
+		this.awareness.setLocalStateField("meta", { ...meta });
+		this.user = {
+			user: this.user.user,
+			cursor: this.user.cursor,
+			meta: meta,
 		};
 	}
 
-	onUserChanged(callback: (users:User[],changeUIDs: { added: number[]; updated: number[]; removed: number[] }) => void) {
+	onUserChanged(
+		callback: (users: User[], changeUIDs: { added: number[]; updated: number[]; removed: number[] }) => void,
+	) {
 		this.awareness.on(
 			"change",
-			(changes: { added: number[]; updated: number[]; removed: number[] }, transactionOrigin: unknown) => {
-				// Whenever somebody updates their awareness information,
-				// we log all awareness information from all users.
-				//	console.log(Array.from())
-				callback(this.getUsers(),changes);
+			(changes: { added: number[]; updated: number[]; removed: number[] }) => {
+				this.user = this.awareness.getLocalState() as User;
+				callback(this.getUsers(), changes);
 			},
 		);
 	}
@@ -74,6 +118,7 @@ export class UserRepository {
 		return this.getUsers().filter((u) => u.user._uid !== this.user.user._uid);
 	}
 	getUsers() {
-		return Array.from(this.awareness.getStates().values()) as User[];
+		//APIからの接続は除外
+		return Array.from(this.awareness.getStates().values()).filter(u=>u.user) as User[];
 	}
 }

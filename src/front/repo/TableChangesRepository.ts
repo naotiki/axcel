@@ -14,26 +14,30 @@ type TableAdd<T extends GuardModel<string, GuardSchema<string>>> = {
 };
 
 export type CellChangeType = "change" | "add" | "delete";
-export type RowChangeType =  "add" | "delete";
+export type RowChangeType = "add" | "delete";
 export type Changes<T extends GuardModel<string, GuardSchema<string>>> = {
 	deletions: string[];
 	changes: { [key: string]: { new: MapValueType } };
 	addtions: { [key: string]: { [K in keyof GuardModelInput<T>]: MapValueType } };
 	getValue(location: AbsoluteCellPosition<T>): MapValueType;
-	isChangedRow(id:string): RowChangeType|null;
+	isChangedRow(id: string): RowChangeType | null;
 	isChanged(location: AbsoluteCellPosition<T>): CellChangeType | null;
-	hasChanges():boolean;
+	hasChanges(): boolean;
 };
+export type MetaData = { locked?: boolean };
 export class TableChangesRepository<T extends GuardModel<string, GuardSchema<string>>> {
 	deletions: Y.Array<string>;
 	changes: Y.Map<Y.Map<MapValueType>>;
 	addtions: Y.Map<Y.Map<MapValueType>>; // UUIDのMap
-	callbacks: ((changes: CellChangeType) => void)[] = [];
-
+	callbacks: ((changes: CellChangeType | "metaData") => void)[] = [];
+	metaData: Y.Map<unknown>;
 	constructor(doc: Y.Doc) {
 		this.deletions = doc.getArray("deletions");
 		this.changes = doc.getMap("changes");
 		this.addtions = doc.getMap("addtions");
+		this.metaData = doc.getMap("metaData");
+		this.setMetaData("locked", false);
+
 		this.deletions.observeDeep((event) => {
 			for (const cb of this.callbacks) {
 				cb("delete");
@@ -49,12 +53,24 @@ export class TableChangesRepository<T extends GuardModel<string, GuardSchema<str
 				cb("add");
 			}
 		});
+		
+		this.metaData.observe((event) => {
+			for (const cb of this.callbacks) {
+				cb("metaData");
+			}
+		});
+	}
+
+	getMetaData(): MetaData {
+		return this.metaData.toJSON() as MetaData;
+	}
+	setMetaData(key: keyof MetaData, value: MetaData[keyof MetaData]) {
+		this.metaData.set(key,value);
 	}
 	private genCellId(location: AbsoluteCellPosition<T>) {
 		return `${location.id}+${location.column ?? ""}`;
 	}
 	removeCellChange(location: AbsoluteCellPosition<T>) {
-		//if(this.isChanged(location) === "delete"){
 		if (this.isChanged(location) === "change") {
 			this.changes.delete(this.genCellId(location));
 			return true;
@@ -126,7 +142,7 @@ export class TableChangesRepository<T extends GuardModel<string, GuardSchema<str
 		}
 		return null;
 	}
-	onChanges(callback: (type: CellChangeType) => void) {
+	onChanges(callback: (type: CellChangeType | "metaData") => void) {
 		this.callbacks.push(callback);
 	}
 
@@ -142,7 +158,7 @@ export class TableChangesRepository<T extends GuardModel<string, GuardSchema<str
 				}
 				return this.addtions[location.id]?.[location.column];
 			},
-			isChangedRow(id:string): RowChangeType|null{
+			isChangedRow(id: string): RowChangeType | null {
 				if (this.deletions.includes(id)) {
 					return "delete";
 				}
@@ -164,7 +180,11 @@ export class TableChangesRepository<T extends GuardModel<string, GuardSchema<str
 				return null;
 			},
 			hasChanges() {
-				return this.deletions.length > 0 || Object.keys(this.changes).length > 0 || Object.keys(this.addtions).length > 0;
+				return (
+					this.deletions.length > 0 ||
+					Object.keys(this.changes).length > 0 ||
+					Object.keys(this.addtions).length > 0
+				);
 			},
 		};
 	}

@@ -12,7 +12,7 @@ export type AbsoluteCellPosition<T extends GuardModel<string, GuardSchema<string
 
 
 
-export const mockModel = g.model("Movie", {
+export const mockModel = g.model("movie", {
 	id: g.int().id().default(autoIncrement).label("ID").axcelReadonly(),
 	title: g.string().label("タイトル").min(1),
 	status: g.enum("Status", ["Ok", "Limited", "Suspended"]).label("ステータス").enumLabels({
@@ -69,7 +69,7 @@ export const mockDatas: MockModel[] = [
 
 ];
 
-export const creator = g.model("Creator", {
+export const creator = g.model("creator", {
 	id: g.int().id().default(autoIncrement).label("ID").axcelReadonly(),
 	name: g.string().label("名前"),
 	country: g.string().label("国"),
@@ -83,7 +83,7 @@ export const creator = g.model("Creator", {
 		}),
 });
 
-export const language = g.model("Language", {
+export const language = g.model("language", {
 	id: g.int().id().default(autoIncrement).label("ID").axcelReadonly(),
 	name: g.string().label("名前"),
 	firstRelease: g.dateTime().label("初版リリース日").dateOnly(),
