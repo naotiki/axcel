@@ -1,33 +1,46 @@
 import * as Y from "yjs";
-import { GuardModel, GuardModelColumn, GuardModelInput, GuardSchema } from "../../library/guard/GuardModel";
+import {
+	GuardModel,
+	GuardModelBase,
+	GuardModelInput,
+	GuardSchema,
+	GuardModelSelector,
+} from "../../library/guard/GuardModel";
 import { AbsoluteCellPosition } from "../components/Table/TableDevTest";
 
+export function genSelectorId<T extends GuardModelBase>(id: GuardModelSelector<T>) {
+	return id.__newuuid ?? Object.entries(id).map(([k, v]) => `${k}:${v}`).join("+");
+}
+export function genCellId<T extends GuardModelBase>(location: AbsoluteCellPosition<T>) {
+	return `${genSelectorId(location.id)}+${location.column ?? ""}`;
+}
 export type MapValueType = Y.Text | string | undefined | null;
-type TableChange<T extends GuardModel<string, GuardSchema<string>>> = {
+type TableChange<T extends GuardModelBase> = {
 	//row
 	//_id: string;
 	//column: GuardModelColumn<T>;
+	__id: GuardModelSelector<T>;
 	new: MapValueType;
 };
-type TableAdd<T extends GuardModel<string, GuardSchema<string>>> = {
+type TableAdd<T extends GuardModelBase> = {
 	[K in keyof GuardModelInput<T>]: MapValueType;
 };
 
 export type CellChangeType = "change" | "add" | "delete";
 export type RowChangeType = "add" | "delete";
 export type Changes<T extends GuardModel<string, GuardSchema<string>>> = {
-	deletions: string[];
-	changes: { [key: string]: { new: MapValueType } };
+	deletions: GuardModelSelector<T>[];
+	changes: { [key: string]: { __id: GuardModelSelector<T>; new: MapValueType } };
 	addtions: { [key: string]: { [K in keyof GuardModelInput<T>]: MapValueType } };
 	getValue(location: AbsoluteCellPosition<T>): MapValueType;
-	isChangedRow(id: string): RowChangeType | null;
+	isChangedRow(id: GuardModelSelector<T>): RowChangeType | null;
 	isChanged(location: AbsoluteCellPosition<T>): CellChangeType | null;
 	hasChanges(): boolean;
 };
 export type MetaData = { locked?: boolean };
-export class TableChangesRepository<T extends GuardModel<string, GuardSchema<string>>> {
-	deletions: Y.Array<string>;
-	changes: Y.Map<Y.Map<MapValueType>>;
+export class TableChangesRepository<T extends GuardModelBase> {
+	deletions: Y.Array<GuardModelSelector<T>>;
+	changes: Y.Map<Y.Map<MapValueType | GuardModelSelector<T>>>;
 	addtions: Y.Map<Y.Map<MapValueType>>; // UUIDのMap
 	callbacks: ((changes: CellChangeType | "metaData") => void)[] = [];
 	metaData: Y.Map<unknown>;
@@ -53,7 +66,7 @@ export class TableChangesRepository<T extends GuardModel<string, GuardSchema<str
 				cb("add");
 			}
 		});
-		
+
 		this.metaData.observe((event) => {
 			for (const cb of this.callbacks) {
 				cb("metaData");
@@ -65,57 +78,56 @@ export class TableChangesRepository<T extends GuardModel<string, GuardSchema<str
 		return this.metaData.toJSON() as MetaData;
 	}
 	setMetaData(key: keyof MetaData, value: MetaData[keyof MetaData]) {
-		this.metaData.set(key,value);
-	}
-	private genCellId(location: AbsoluteCellPosition<T>) {
-		return `${location.id}+${location.column ?? ""}`;
+		this.metaData.set(key, value);
 	}
 	removeCellChange(location: AbsoluteCellPosition<T>) {
 		if (this.isChanged(location) === "change") {
-			this.changes.delete(this.genCellId(location));
+			this.changes.delete(genCellId(location));
 			return true;
 		}
 		return false;
 	}
-	deleteRow(id: string) {
-		if (this.deletions.toArray().includes(id)) {
+	deleteRow(id: GuardModelSelector<T>) {
+		if (this.deletions.toArray().includes(id as GuardModelSelector<T>)) {
 			return;
 		}
-		if (this.addtions.has(id)) {
-			this.addtions.delete(id);
+		if (id.__newuuid&&this.addtions.has(id.__newuuid)) {
+			this.addtions.delete(id.__newuuid);
 			return;
 		}
-		if (this.changes.has(id)) {
-			this.changes.delete(id);
+		if (this.changes.has(genSelectorId(id))) {
+			this.changes.delete(genSelectorId(id));
 		}
 		this.deletions.push([id]);
 	}
-	recoverRow(id: string) {
+	recoverRow(id: GuardModelSelector<T>) {
 		const index = this.deletions.toArray().indexOf(id);
 		if (index >= 0) {
 			this.deletions.delete(index, 1);
 		}
 	}
 	addChange(location: AbsoluteCellPosition<T>, change: TableChange<T>) {
-		const map = new Y.Map<MapValueType>();
+		const map = new Y.Map<MapValueType | GuardModelSelector<T>>();
 		map.set("new", change.new);
-		this.changes.set(this.genCellId(location), map);
+		this.changes.set(genCellId(location), map);
 	}
 	addAddition(id: string, addition: TableAdd<T>) {
 		const map = new Y.Map<MapValueType>(Object.entries(addition));
 		this.addtions.set(id, map);
 	}
-	addDeletion(id: string) {
+	addDeletion(id: GuardModelSelector<T>) {
 		this.deletions.push([id]);
 	}
 
 	update(location: AbsoluteCellPosition<T>, value: MapValueType): boolean {
-		const c = this.changes.get(this.genCellId(location));
+		const c = this.changes.get(genCellId(location));
 		if (c) {
+			c.set("__id",location.id);
 			c.set("new", value);
 			return true;
 		}
-		const a = this.addtions.get(location.id);
+		if (!location.id.__newuuid) return false;
+		const a = this.addtions.get(location.id.__newuuid);
 		if (a) {
 			a.set(location.column, value);
 			return true;
@@ -123,21 +135,23 @@ export class TableChangesRepository<T extends GuardModel<string, GuardSchema<str
 		return false;
 	}
 	//TODO: ここでエラーが出る
-	getValue(location: AbsoluteCellPosition<T>): MapValueType {
-		const c = this.changes.get(this.genCellId(location));
+	getValue(location: AbsoluteCellPosition<T>): MapValueType|undefined {
+		const c = this.changes.get(genCellId(location));
 		if (c) {
-			return c.get("new");
+			return c.get("new") as MapValueType;
 		}
-		return this.addtions.get(location.id)?.get(location.column);
+		if (location.id.__newuuid) {
+			return this.addtions.get(location.id.__newuuid)?.get(location.column);
+		}
 	}
 	isChanged(location: AbsoluteCellPosition<T>): CellChangeType | null {
 		if (this.deletions.toArray().includes(location.id)) {
 			return "delete";
 		}
-		if (this.changes.has(`${location.id}+${location.column ?? ""}`)) {
+		if (this.changes.has(genCellId(location))) {
 			return "change";
 		}
-		if (this.addtions.get(location.id)) {
+		if (location.id.__newuuid&&this.addtions.get(location.id.__newuuid)) {
 			return "add";
 		}
 		return null;
@@ -152,17 +166,17 @@ export class TableChangesRepository<T extends GuardModel<string, GuardSchema<str
 			changes: this.changes.toJSON(),
 			addtions: this.addtions.toJSON(),
 			getValue(location: AbsoluteCellPosition<T>): MapValueType {
-				const c = this.changes[`${location.id}+${location.column ?? ""}`];
+				const c = this.changes[genCellId(location)];
 				if (c) {
 					return c.new;
 				}
-				return this.addtions[location.id]?.[location.column];
+				return location.id.__newuuid ? this.addtions[location.id.__newuuid]?.[location.column] : undefined;
 			},
-			isChangedRow(id: string): RowChangeType | null {
+			isChangedRow(id:GuardModelSelector<T> ): RowChangeType | null {
 				if (this.deletions.includes(id)) {
 					return "delete";
 				}
-				if (this.addtions[id]) {
+				if (id.__newuuid&&this.addtions[id.__newuuid]) {
 					return "add";
 				}
 				return null;
@@ -171,10 +185,10 @@ export class TableChangesRepository<T extends GuardModel<string, GuardSchema<str
 				if (this.deletions.includes(location.id)) {
 					return "delete";
 				}
-				if (this.changes[`${location.id}+${location.column ?? ""}`]) {
+				if (this.changes[genCellId(location)]) {
 					return "change";
 				}
-				if (this.addtions[location.id]?.[location.column]) {
+				if (location.id.__newuuid&&this.addtions[location.id.__newuuid]?.[location.column]) {
 					return "add";
 				}
 				return null;

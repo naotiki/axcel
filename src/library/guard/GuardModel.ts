@@ -1,8 +1,8 @@
-import { Prisma, PrismaClient } from "@prisma/client";
-import { label } from "../test/gionsai";
+import { PrismaClient } from "@prisma/client";
 import { GuardHasDefault, GuardOptional, GuardValue } from "./GuardValue";
 import { GuardField, GuardRelation, GuardRelationList } from "./guard";
-import { FluentOperation, Operation } from "@prisma/client/runtime/library";
+import { FluentOperation } from "@prisma/client/runtime/library";
+
 
 export class GuardModel<T extends string, S extends GuardSchema<T>> {
 	name: string;
@@ -14,6 +14,7 @@ export class GuardModel<T extends string, S extends GuardSchema<T>> {
 	}
 	check() {
 		for (const key in this.modelSchema) {
+			if(key.startsWith("__")) throw new Error(`GuardSchemaError: ${this.name}.${key} ---\n\tField name can not start with "__"`);
 			const f = this.modelSchema[key];
 			if (f instanceof GuardValue) {
 				const err = f.checkDef();
@@ -26,10 +27,9 @@ export class GuardModel<T extends string, S extends GuardSchema<T>> {
 	//完全識別用IDを付与
 	injectId(value: GuardModelOutput<GuardModel<T, S>>) {
 		return {
-			_id: Object.entries(this.modelSchema)
-				.filter(([k, v]) => v instanceof GuardValue && v._id)
-				.map(([k, v]) => value[k as keyof typeof value])
-				.join(""),
+			__id: Object.fromEntries(Object.entries(this.modelSchema)
+			.filter(([k, v]) => v instanceof GuardValue && v._id)
+			.map(([k, v]) => [k,value[k as keyof typeof value]])) as GuardModelSelector<this>,
 			data: {
 				...value,
 			},
@@ -38,16 +38,14 @@ export class GuardModel<T extends string, S extends GuardSchema<T>> {
 	injectIdList(values: GuardModelOutput<GuardModel<T, S>>[]) {
 		return values.map((v) => this.injectId(v));
 	}
-	linkPrisma<P extends { [A in FluentOperation]: (...arg:(any)[]) => unknown }>(prisma: P) {
-		(new PrismaClient()["mvie" as keyof PrismaClient] as unknown as P).create(
-
-
-		);
-	}
 }
+
+
 
 export type GuardModelSelector<T extends GuardModel<string, GuardSchema<string>>> = {
 	[K in keyof GuardModelOutput<T>]?:  GuardModelOutput<T>[K];
+}&{
+	__newuuid?:string
 };
 
 export type GuardSchema<T extends string = string> = { [_ in T]: GuardField };

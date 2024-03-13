@@ -40,6 +40,8 @@ import {
 	TableChangesRepository,
 	RowChangeType,
 	MetaData,
+	genSelectorId,
+	genCellId,
 } from "../../repo/TableChangesRepository";
 import { GuardValue } from "../../../library/guard/GuardValue";
 import { GuardBool } from "../../../library/guard/values/GuardBool";
@@ -56,8 +58,9 @@ import {
 	IconTablePlus,
 	IconTrash,
 } from "@tabler/icons-react";
-import { GuardModel, GuardModelBase, GuardModelInput } from "@/library/guard/GuardModel";
+import { GuardModel, GuardModelBase, GuardModelInput, GuardModelSelector } from "@/library/guard/GuardModel";
 import { useUser } from "../UserProvider";
+import { IconTextWithTooltip } from "./IconTextWithTooltip";
 const TableContext = createContext<TableManager | null>(null);
 //Wrapper
 export function useTable() {
@@ -121,7 +124,7 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 	const [users, setUsers] = useState<User[]>([]);
 	const authUser = useUser();
 	const [changes, setChanges] = useState<Changes<typeof mockModel> | null>(null);
-	const [locked, setLocked] = useState<boolean|null>(null);
+	const [locked, setLocked] = useState<boolean | null>(null);
 	useEffect(() => {
 		const doc = new Y.Doc();
 		const wsProvider = new WebsocketProvider("ws://localhost:8080/yws", "test-room", doc);
@@ -144,15 +147,16 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 		tableChangesRepo.current = new TableChangesRepository<typeof mockModel>(doc);
 		tableChangesRepo.current.onChanges((type) => {
 			if (tableChangesRepo.current !== null) {
-				setLocked(tableChangesRepo.current.getMetaData().locked??false);
+				setLocked(tableChangesRepo.current.getMetaData().locked ?? false);
 				setChanges(tableChangesRepo.current.getState());
+				console.log(tableChangesRepo.current.getState());
 			}
 		});
 	}, [authUser]);
 	useEffect(() => {
 		console.dir(users);
 	}, [users]);
-	const [selectedCell, setSelectedCell] = useState<CellLocation | null>(null);
+	const [selectedCell, setSelectedCell] = useState<string | null>(null);
 	const [selectedRows, setSelectedRows] = useState<string[]>([]);
 	return (
 		<Box maw={"100%"}>
@@ -172,25 +176,25 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 				</Avatar.Group>
 				<Space />
 				<Group>
-					<Center c={"green"}>
-						<IconPlus />
-						{Object.keys(changes?.addtions ?? {}).length ?? 0}
-					</Center>
-					<Center c={"yellow"}>
-						<IconEdit />
-						{Object.keys(changes?.changes ?? {}).length ?? 0}
-					</Center>
-					<Center c={"red"}>
-						<IconTrash />
-						{changes?.deletions.length ?? 0}
-					</Center>
-					<Button
-						loading={locked??false}
-						disabled={!changes?.hasChanges()}
-						onClick={() => {
-							
-						}}
-					>
+					<IconTextWithTooltip
+						icon={<IconEdit />}
+						text={(Object.keys(changes?.changes ?? {}).length ?? 0).toString()}
+						tooltip={`変更 : ${Object.keys(changes?.changes ?? {}).length ?? 0} 件`}
+						color="yellow"
+					/>
+					<IconTextWithTooltip
+						icon={<IconPlus />}
+						text={(Object.keys(changes?.addtions ?? {}).length ?? 0).toString()}
+						tooltip={`追加 : ${(Object.keys(changes?.addtions ?? {}).length ?? 0).toString()} 行`}
+						color="green"
+					/>
+					<IconTextWithTooltip
+						icon={<IconTrash />}
+						text={(changes?.deletions.length ?? 0).toString()}
+						tooltip={`削除 : ${changes?.deletions.length ?? 0} 行`}
+						color="red"
+					/>
+					<Button loading={locked ?? false} disabled={!changes?.hasChanges()} onClick={() => {}}>
 						変更を反映
 					</Button>
 				</Group>
@@ -222,31 +226,32 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 					</thead>
 					<tbody>
 						{data.map((o, i) => {
+							const sId = genSelectorId(o.__id);
 							return (
 								<tr
-									key={o._id}
-									className={changes?.deletions.includes(o._id) ? css({ backgroundColor: "#ffcccc" }) : ""}
+									key={sId}
+									className={changes?.deletions.includes(o.__id) ? css({ backgroundColor: "#ffcccc" }) : ""}
 								>
 									<ActionCell
-										changed={changes?.isChangedRow(o._id) ?? null}
-										selected={selectedRows.includes(o._id)}
+										changed={changes?.isChangedRow(o.__id) ?? null}
+										selected={selectedRows.includes(sId)}
 										onChange={(v) => {
 											if (v) {
-												setSelectedRows((s) => [...s, o._id]);
+												setSelectedRows((s) => [...s, sId]);
 											} else {
-												setSelectedRows((s) => s.filter((r) => r !== o._id));
+												setSelectedRows((s) => s.filter((r) => r !== sId));
 											}
 										}}
 										onRowRecover={() => {
-											tableChangesRepo.current?.recoverRow(o._id);
+											tableChangesRepo.current?.recoverRow(o.__id);
 										}}
 										onRowDelete={() => {
-											tableChangesRepo.current?.deleteRow(o._id);
+											tableChangesRepo.current?.deleteRow(o.__id);
 										}}
 									/>
 									{Object.entries(mockModel.modelSchema).map(([key, field]) => {
 										const loc: CellLocation = {
-											id: o._id,
+											id: o.__id,
 											column: key as keyof typeof mockModel.modelSchema,
 										};
 										const value = o.data[key as keyof typeof mockModel.modelSchema];
@@ -269,9 +274,7 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 												field={field}
 												value={v instanceof Y.Text || (v !== null && v !== undefined) ? v.toString() : v}
 												selected={
-													selectedCell?.id === loc.id && selectedCell?.column === loc.column
-														? user?.user.color
-														: undefined
+													selectedCell && selectedCell === genCellId(loc) ? user?.user.color : undefined
 												}
 												selectingUsers={users
 													.filter(
@@ -282,7 +285,7 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 													)
 													.map((u) => ({ name: u.user.name, color: u.user.color }))}
 												onSelected={(l) => {
-													setSelectedCell(l);
+													setSelectedCell(genCellId(l));
 													userRepo.current?.updateUserCursor({
 														selectedCell: l,
 													});
@@ -296,6 +299,7 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 														console.log("not free", v);
 														if (tableChangesRepo.current?.update(loc, v) === false) {
 															tableChangesRepo.current?.addChange(loc, {
+																__id: loc.id,
 																new: v,
 															});
 														}
@@ -305,6 +309,7 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 														(tableChangesRepo.current?.getValue(loc) as Y.Text | null | undefined) ?? null;
 													if (yText === null) {
 														tableChangesRepo.current?.addChange(loc, {
+															__id: loc.id,
 															new: new Y.Text(v),
 														});
 														return;
@@ -326,102 +331,104 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 							);
 						})}
 						{changes?.addtions &&
-							Object.entries(changes.addtions).map(([id, addition]) => (
-								<tr
-									key={id}
-									className={css({
-										backgroundColor: "#ccffcc",
-									})}
-								>
-									<ActionCell
-										changed={changes?.isChangedRow(id)}
-										selected={selectedRows.includes(id)}
-										onChange={(v) => {
-											if (v) {
-												setSelectedRows((s) => [...s, id]);
-											} else {
-												setSelectedRows((s) => s.filter((r) => r !== id));
-											}
-										}}
-										onRowDelete={() => {
-											tableChangesRepo.current?.deleteRow(id);
-										}}
-									/>
-									{Object.entries(mockModel.modelSchema).map(([key, field]) => {
-										const loc: CellLocation = {
-											id: id,
-											column: key as keyof typeof mockModel.modelSchema,
-										};
-										const value = addition[key as keyof typeof mockModel.modelSchema];
-										if (field._readonly) {
-											return (
-												<td className={readOnlyCell} key={key}>
-													<GuardFieldDisplay field={field} value={value?.toString()} />
-												</td>
-											);
-										}
-										const v = changes === null || !changes?.isChanged(loc) ? value : changes.getValue(loc);
-										return (
-											<TableDataCell
-												changed={"add"}
-												loc={loc}
-												key={key}
-												field={field}
-												value={v instanceof Y.Text || (v !== null && v !== undefined) ? v.toString() : v}
-												selected={
-													selectedCell?.id === loc.id && selectedCell?.column === loc.column
-														? user?.user.color
-														: undefined
+							Object.entries(changes.addtions).map(([id, addition]) => {
+								const selector = { __newuuid: id };
+								const sId = genSelectorId(selector);
+								return (
+									<tr
+										key={id}
+										className={css({
+											backgroundColor: "#ccffcc",
+										})}
+									>
+										<ActionCell
+											changed={changes?.isChangedRow(selector)}
+											selected={selectedRows.includes(sId)}
+											onChange={(v) => {
+												if (v) {
+													setSelectedRows((s) => [...s, sId]);
+												} else {
+													setSelectedRows((s) => s.filter((r) => r !== sId));
 												}
-												selectingUsers={users
-													.filter(
-														(u) =>
-															u.user._uid !== user?.user._uid &&
-															u.cursor.selectedCell?.column === loc.column &&
-															u.cursor.selectedCell?.id === loc.id,
-													)
-													.map((u) => ({ name: u.user.name, color: u.user.color }))}
-												onSelected={(l) => {
-													setSelectedCell(l);
-													userRepo.current?.updateUserCursor({
-														selectedCell: l,
-													});
-												}}
-												onValueReset={() => {
-													tableChangesRepo.current?.update(
-														loc,
-														field instanceof GuardValue && field._default ? undefined : null,
-													);
-												}}
-												onValueChanged={(v, old) => {
-													if (!field._isFreeEdit || v === undefined || v === null) {
-														console.log("not free", v);
-														if (tableChangesRepo.current?.update(loc, v) === false) {
-															throw new Error("illigal");
+											}}
+											onRowDelete={() => {
+												tableChangesRepo.current?.deleteRow(selector);
+											}}
+										/>
+										{Object.entries(mockModel.modelSchema).map(([key, field]) => {
+											const loc: CellLocation = {
+												id: selector,
+												column: key as keyof typeof mockModel.modelSchema,
+											};
+											const value = addition[key as keyof typeof mockModel.modelSchema];
+											if (field._readonly) {
+												return (
+													<td className={readOnlyCell} key={key}>
+														<GuardFieldDisplay field={field} value={value?.toString()} />
+													</td>
+												);
+											}
+											const v = changes === null || !changes?.isChanged(loc) ? value : changes.getValue(loc);
+											return (
+												<TableDataCell
+													changed={"add"}
+													loc={loc}
+													key={key}
+													field={field}
+													value={v instanceof Y.Text || (v !== null && v !== undefined) ? v.toString() : v}
+													selected={
+														selectedCell && selectedCell === genCellId(loc) ? user?.user.color : undefined
+													}
+													selectingUsers={users
+														.filter(
+															(u) =>
+																u.user._uid !== user?.user._uid &&
+																u.cursor?.selectedCell?.column === loc.column &&
+																u.cursor?.selectedCell?.id === loc.id,
+														)
+														.map((u) => ({ name: u.user.name, color: u.user.color }))}
+													onSelected={(l) => {
+														setSelectedCell(genCellId(l));
+														userRepo.current?.updateUserCursor({
+															selectedCell: l,
+														});
+													}}
+													onValueReset={() => {
+														tableChangesRepo.current?.update(
+															loc,
+															field instanceof GuardValue && field._default ? undefined : null,
+														);
+													}}
+													onValueChanged={(v, old) => {
+														if (!field._isFreeEdit || v === undefined || v === null) {
+															console.log("not free", v);
+															if (tableChangesRepo.current?.update(loc, v) === false) {
+																throw new Error("illigal");
+															}
+															return;
 														}
-														return;
-													}
-													const yText =
-														(tableChangesRepo.current?.getValue(loc) as Y.Text | null | undefined) ?? null;
-													if (yText === null) {
-														tableChangesRepo.current?.update(loc, new Y.Text(v));
-														return;
-													}
-													let count = 0;
-													for (const part of Diff.diffChars(old ?? "", v)) {
-														if (part.added) {
-															yText.insert(count, part.value);
-														} else if (part.removed) {
-															yText.delete(count, part.value.length);
+														const yText =
+															(tableChangesRepo.current?.getValue(loc) as Y.Text | null | undefined) ?? null;
+														if (yText === null) {
+															tableChangesRepo.current?.update(loc, new Y.Text(v));
+															return;
 														}
-														count += part.value.length;
-													}
-												}}
-											/>
-										);
-									})}
-								</tr>
-							))}
+														let count = 0;
+														for (const part of Diff.diffChars(old ?? "", v)) {
+															if (part.added) {
+																yText.insert(count, part.value);
+															} else if (part.removed) {
+																yText.delete(count, part.value.length);
+															}
+															count += part.value.length;
+														}
+													}}
+												/>
+											);
+										})}
+									</tr>
+								);
+							})}
 					</tbody>
 				</table>
 				<Button

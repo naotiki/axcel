@@ -1,13 +1,12 @@
-import { never } from "zod";
 import { GuardGenerator } from "../../../library/guard/GuardGenerator";
-import { GuardModelOutput, GuardModel, GuardModelColumn, GuardSchema } from "../../../library/guard/GuardModel";
+import { GuardModelOutput, GuardModelColumn, GuardModelSelector, GuardModelBase } from "../../../library/guard/GuardModel";
 import { autoIncrement } from "../../../library/guard/ValueProviders";
 
 const g = new GuardGenerator();
 
-export type AbsoluteCellPosition<T extends GuardModel<string, GuardSchema<string>>,S extends string = never> = {
-	id: string;
-	column: GuardModelColumn<T> | S;
+export type AbsoluteCellPosition<T extends GuardModelBase> = {
+	id: GuardModelSelector<T>;
+	column: GuardModelColumn<T>;
 };
 
 
