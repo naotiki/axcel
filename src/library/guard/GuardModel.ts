@@ -1,6 +1,7 @@
 import { WithAttributes } from "./WithAttributes";
 import { GuardHasDefault, GuardOptional, GuardValue } from "./GuardValue";
 import { GuardField, GuardRelation, GuardRelationList } from "./guard";
+import { SortType } from "@/front/components/Table/AxcelTable";
 
 export class GuardModel<T extends string, S extends GuardSchema<T>> extends WithAttributes {
 	modelSchema: S;
@@ -59,7 +60,9 @@ export type GuardModelSelector<T extends GuardModel<string, GuardSchema<string>>
 export type GuardSchema<T extends string = string> = { [_ in T]: GuardField };
 
 export type GuardModelBase = GuardModel<string, GuardSchema<string>>;
-
+export type GuardModelSort<T extends GuardModelBase>={
+	[K in GuardModelColumn<T>]?: SortType
+}
 export type GuardModelColumn<T extends GuardModelBase> = T extends GuardModel<string, infer S>
 	? keyof S
 	: never;

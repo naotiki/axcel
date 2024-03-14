@@ -164,6 +164,12 @@ export class TableChangesRepository<T extends GuardModelBase> {
 		}
 		return null;
 	}
+	removeCallback(callback: (type: CellChangeType | "metaData") => void) {
+		const index = this.callbacks.indexOf(callback);
+		if (index >= 0) {
+			this.callbacks.splice(index, 1);
+		}
+	}
 	onChanges(callback: (type: CellChangeType | "metaData") => void) {
 		this.callbacks.push(callback);
 	}

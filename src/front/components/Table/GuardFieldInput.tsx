@@ -10,7 +10,6 @@ import { GuardEnum } from "../../../library/guard/values/GuardEnum";
 import { GuardBool } from "../../../library/guard/values/GuardBool";
 import { GuardDateTime } from "../../../library/guard/values/GuardDateTime";
 import { GuardInt, GuardNumbers } from "../../../library/guard/values/GuardNumbers";
-import React from "react";
 
 type GuardFieldInputProps = {
 	field: GuardField;

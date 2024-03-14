@@ -1,6 +1,6 @@
 import { Container, Stack, Text, Title } from "@mantine/core";
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { TableProvider } from "../components/Table/TableProvider";
+import { AxcelTableView } from "../components/Table/TableProvider";
 import a from "../components/Table/TableDevTest";
 
 export const Route = createFileRoute("/model/$name")({
@@ -24,7 +24,7 @@ function Model() {
 			<Title order={1}>{model.dispName()}</Title>
 			<Text>{model.attrs.description??""}</Text>
 			<Stack justify="center" align="center">
-				<TableProvider model={model} />
+				<AxcelTableView model={model} />
 			</Stack>
 		</Container>
 	);

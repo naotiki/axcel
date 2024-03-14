@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { css } from "@emotion/css";
 import * as Diff from "diff";
 import { AbsoluteCellPosition } from "./TableDevTest";
@@ -11,14 +11,24 @@ import {
 	GuardModelColumn,
 	GuardModelOutputWithId,
 	GuardModelSelector,
+	GuardModelSort,
 } from "@/library/guard/GuardModel";
 import { GuardFieldDisplay } from "./GuardFieldDisplay";
 import { TableDataCell, cell } from "./TableDataCell";
 import { ActionCell } from "./ActionCell";
 import { GuardField } from "@/library/guard/guard";
 import { useDisclosure } from "@mantine/hooks";
-import { Button, Popover, Text } from "@mantine/core";
+import { ActionIcon, Box, Button, Center, Group, Popover, Space, Text } from "@mantine/core";
 import React from "react";
+import {
+	IconArrowUp,
+	IconArrowUpTail,
+	IconCaretDownFilled,
+	IconCaretUp,
+	IconCaretUpDown,
+	IconCaretUpDownFilled,
+	IconCaretUpFilled,
+} from "@tabler/icons-react";
 const header = css({
 	position: "sticky",
 	top: 0,
@@ -46,6 +56,9 @@ export type AxcelTableProps<M extends GuardModelBase> = {
 	users: User[];
 	tableChangesRepo: TableChangesRepository<M>;
 	userRepo: UserRepository;
+	locked: boolean;
+	sort:GuardModelSort<M>
+	onSortChanged:(sort:GuardModelSort<M>)=>void
 };
 export function AxcelTable<M extends GuardModelBase>({
 	model,
@@ -55,9 +68,20 @@ export function AxcelTable<M extends GuardModelBase>({
 	users,
 	tableChangesRepo,
 	userRepo,
+	locked,
+	sort,
+	onSortChanged,
 }: AxcelTableProps<M>) {
 	const [selectedCell, setSelectedCell] = useState<string | null>(null);
 	const [selectedRows, setSelectedRows] = useState<string[]>([]);
+	useEffect(() => {
+		if (locked) {
+			setSelectedCell(null);
+			userRepo.updateUserCursor({
+				selectedCellId: undefined,
+			});
+		}
+	}, [locked,userRepo]);
 	return (
 		<table
 			className={css({
@@ -70,7 +94,25 @@ export function AxcelTable<M extends GuardModelBase>({
 				<tr>
 					<th className={actionCell}>操作</th>
 					{Object.entries(model.modelSchema).map(([key, value]) => {
-						return <AxcelTableTh key={key} field={value} name={value.attrs.label ?? key} />;
+						return (
+							<AxcelTableTh
+								key={key}
+								field={value}
+								name={value.attrs.label ?? key}
+								sorted={sort[key as GuardModelColumn<M>]}
+								onSortChange={(): void => {
+									const newSort = {...sort}
+									if(newSort[key as GuardModelColumn<M>] === "asc"){
+										newSort[key as GuardModelColumn<M>] = "desc"
+									}else if(newSort[key as GuardModelColumn<M>] === "desc"){
+										newSort[key as GuardModelColumn<M>] = undefined
+									}else{
+										newSort[key as GuardModelColumn<M>] = "asc"
+									}
+									onSortChanged(newSort)
+								}}
+							/>
+						);
 					})}
 				</tr>
 			</thead>
@@ -282,16 +324,39 @@ export function AxcelTable<M extends GuardModelBase>({
 		</table>
 	);
 }
-
-const AxcelTableTh = React.memo(({ field, name }: { field: GuardField; name: string }) => {
+export type SortType = "asc" | "desc" | undefined;
+type AxcelTableThProps = {
+	field: GuardField;
+	name: string;
+	sorted: SortType;
+	onSortChange: () => void;
+};
+const AxcelTableTh = React.memo(({ field, name, ...props }: AxcelTableThProps) => {
 	const [opened, { close, open }] = useDisclosure(false);
 	return (
 		<th className={cell}>
 			<Popover position="top" withArrow shadow="sm" opened={opened}>
 				<Popover.Target>
-					<Text onMouseEnter={open} onMouseLeave={close}>
-						{name}
-					</Text>
+					<Button
+						leftSection={
+							props.sorted === "asc" ? (
+								<IconCaretUpFilled strokeWidth={1} style={{ width: "1rem", height: "1rem" }} />
+							) : props.sorted === "desc" ? (
+								<IconCaretDownFilled strokeWidth={1} style={{ width: "1rem", height: "1rem" }} />
+							) : (
+								<IconCaretUpDown strokeWidth={1} style={{ width: "1rem", height: "1rem" }} />
+							)
+						}
+						variant="transparent"
+						size="compact-md"
+						fullWidth
+						color="black"
+						onClick={props.onSortChange}
+					>
+						<Text onMouseEnter={open} onMouseLeave={close}>
+							{name}
+						</Text>
+					</Button>
 				</Popover.Target>
 				<Popover.Dropdown style={{ maxWidth: "16rem" }}>
 					<Text size="md" fw={700}>
@@ -307,9 +372,10 @@ const AxcelTableTh = React.memo(({ field, name }: { field: GuardField; name: str
 									{typeof field._default !== "object" ? field._default?.toString() : "システム生成"}
 								</Text>
 							)}
-							{[field._id, field._optional, field._readonly, field._unique].map(
-								(a, i) => a ? ["ID", "空を許可", "変更不可", "ユニーク"][i]: undefined,
-							).filter(e=>e).join(", ")}
+							{[field._id, field._optional, field._readonly, field._unique]
+								.map((a, i) => (a ? ["ID", "空を許可", "変更不可", "ユニーク"][i] : undefined))
+								.filter((e) => e)
+								.join(", ")}
 						</>
 					)}
 				</Popover.Dropdown>

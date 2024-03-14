@@ -1,6 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { TableManager } from "../../model/TableManager";
-import { ZodTypeAny } from "zod";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { css } from "@emotion/css";
 import { v4 as uuidv4 } from "uuid";
 import { Box, Button, Stack, Loader, LoadingOverlay } from "@mantine/core";
@@ -8,11 +6,7 @@ import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { User, UserRepository } from "../../repo/UserRepository";
 import { getRandomColor } from "../../utils/Color";
-import {
-	Changes,
-	MapValueType,
-	TableChangesRepository,
-} from "../../repo/TableChangesRepository";
+import { Changes, MapValueType, TableChangesRepository } from "../../repo/TableChangesRepository";
 import { GuardValue } from "../../../library/guard/GuardValue";
 import { useShallowEffect } from "@mantine/hooks";
 import { IconTablePlus } from "@tabler/icons-react";
@@ -21,38 +15,21 @@ import {
 	GuardModelInput,
 	GuardModelOutput,
 	GuardModelOutputWithId,
+	GuardModelSort,
 } from "@/library/guard/GuardModel";
 import { useUser } from "../UserProvider";
 import { hc } from "hono/client";
 import { AxcelGet } from "@/api";
-import { Prisma } from "@prisma/client";
 import { AxcelTableHeader } from "./AxcelTableHeader";
 import { AxcelTable } from "./AxcelTable";
-const TableContext = createContext<TableManager | null>(null);
-//Wrapper
-export function useTable() {
-	const ctx = useContext(TableContext);
-	if (!ctx) {
-		throw new Error("TableContext not found. the TableElement must be surrounded by <TableProvider>");
-	}
-	return ctx;
-}
 
-
-
-
-
-export type Row = {
-	name: string;
-	type: ZodTypeAny;
-};
 type TableProviderProps<M extends GuardModelBase> = {
 	model: M;
 };
 
 //type CellLocation = AbsoluteCellPosition<typeof mockModel>;
 
-export function TableProvider<M extends GuardModelBase>({ model, ...props }: TableProviderProps<M>) {
+export function AxcelTableView<M extends GuardModelBase>({ model, ...props }: TableProviderProps<M>) {
 	const userRepo = useRef<UserRepository>();
 	const tableChangesRepo = useRef<TableChangesRepository<M>>();
 	const [user, setUser] = useState<User>();
@@ -62,6 +39,22 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 	const [locked, setLocked] = useState<boolean>(false);
 	const lastUpdated = useRef<number>();
 	const [data, setData] = useState<GuardModelOutputWithId<M>[]>();
+	const [sort, setSort] = useState(
+		Object.fromEntries(model.getIdEntries().map(([k]) => [k, "asc"])) as GuardModelSort<M>,
+	);
+	const fetch = async () => {
+		console.log(sort);
+		const res = await hc<AxcelGet>("http://localhost:8080/api").axcel[":model"].$get({
+			param: { model: model.name },
+			query: { ...sort },
+		});
+		const data = await res.json();
+		if (Array.isArray(data)) {
+			setData(model.injectIdList(data as GuardModelOutput<M>[]));
+			lastUpdated.current = Date.now();
+		}
+	};
+
 	useShallowEffect(() => {
 		const doc = new Y.Doc();
 		const wsProvider = new WebsocketProvider("ws://localhost:8080/yws", model.name, doc);
@@ -78,40 +71,33 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 		userRepo.current.onUserChanged((users) => {
 			setUsers(users);
 		});
-		hc<AxcelGet>("http://localhost:8080/api")
-			.axcel[":model"].$get({ param: { model: model.name } })
-			.then(async (res) => {
-				const data = await res.json();
-				if (Array.isArray(data)) {
-					setData(model.injectIdList(data as GuardModelOutput<M>[]));
-					lastUpdated.current = Date.now();
-				}
-			});
+		console.log(sort);
 		tableChangesRepo.current = new TableChangesRepository<M>(doc);
 		tableChangesRepo.current.onChanges((type) => {
 			if (tableChangesRepo.current !== undefined) {
 				const meta = tableChangesRepo.current.getMetaData();
 				setLocked(meta.locked ?? false);
 				setChanges(tableChangesRepo.current.getState());
-				if (meta.updatedAt && lastUpdated.current && meta.updatedAt > lastUpdated.current) {
-					hc<AxcelGet>("http://localhost:8080/api")
-						.axcel[":model"].$get({ param: { model: model.name } })
-						.then(async (res) => {
-							const data = await res.json();
-							if (Array.isArray(data)) {
-								setData(model.injectIdList(data as GuardModelOutput<M>[]));
-								lastUpdated.current = Date.now();
-							}
-						});
-				}
-				
 			}
 		});
 		return () => {
 			wsProvider.destroy();
-		}
-	}, [authUser.name,model]);
-	if (!user || !users || !changes || !data || !tableChangesRepo.current || !userRepo.current )
+		};
+	}, [authUser.name, model]);
+	useShallowEffect(() => {
+		fetch();
+		const callback = () => {
+			const meta = tableChangesRepo.current?.getMetaData();
+			if (meta?.updatedAt && lastUpdated.current && meta.updatedAt > lastUpdated.current) {
+				fetch();
+			}
+		};
+		tableChangesRepo.current?.onChanges(callback);
+		return () => {
+			tableChangesRepo.current?.removeCallback(callback);
+		};
+	}, [sort,tableChangesRepo.current]);
+	if (!user || !users || !changes || !data || !tableChangesRepo.current || !userRepo.current)
 		return (
 			<Stack
 				align="center"
@@ -151,6 +137,9 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 						users={users}
 						tableChangesRepo={tableChangesRepo.current}
 						userRepo={userRepo.current}
+						locked={locked}
+						sort={sort}
+						onSortChanged={(sort) => setSort(sort)}
 					/>
 				}
 				<Button
@@ -174,4 +163,3 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 		</Box>
 	);
 }
-

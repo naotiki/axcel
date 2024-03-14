@@ -134,9 +134,14 @@ const axcelGet = api.get(
 		z.object({
 			model: z.string(),
 		}),
+	),zValidator(
+		"query",
+		z.any().optional(),
 	),
 	async (c) => {
+		
 		const { model: modelName } = c.req.valid("param");
+		const sort=c.req.valid("query");
 		const model = a.models.find((m) => m.name === modelName);
 		if (!model) {
 			return c.json({ success: false, error: "model not found" }, 404);
@@ -146,10 +151,16 @@ const axcelGet = api.get(
 			const modelClient = prisma[modelName as keyof PrismaClient] as unknown as {
 				[A in Operation]: (...args: unknown[]) => Prisma.PrismaPromise<unknown>;
 			};
-			const order = Object.fromEntries(model.getIdEntries().map(([k]) => [k, "asc"]));
-
+			const order = sort || Object.fromEntries(model.getIdEntries().map(([k]) => [k, "asc"]));
+			
+			prisma.movie.findMany({
+				orderBy: {
+					id: "asc",
+					title:"asc",
+				},
+			});
 			const result = (await modelClient.findMany({
-				orderBy: order,
+				orderBy: Object.entries(order).map(([k, v]) => ({[k]:v})),
 			})) as GuardModelOutput<typeof model>[];
 			return c.json(result);
 		} catch (e: unknown) {
@@ -157,7 +168,7 @@ const axcelGet = api.get(
 			return c.json({ success: false, error: JSON.stringify(e) }, 500);
 		}
 	},
-);
+)
 
 export type AxcelPost = typeof axcelPost;
 export type AxcelGet = typeof axcelGet;
