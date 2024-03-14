@@ -1,8 +1,8 @@
-import { GuardGenerator } from "../../../library/guard/GuardGenerator";
+import { GuardGenerator as Axcel } from "../../../library/guard/GuardGenerator";
 import { GuardModelOutput, GuardModelColumn, GuardModelSelector, GuardModelBase } from "../../../library/guard/GuardModel";
 import { autoIncrement } from "../../../library/guard/ValueProviders";
 
-const g = new GuardGenerator();
+const a = new Axcel();
 
 export type AbsoluteCellPosition<T extends GuardModelBase> = {
 	id: GuardModelSelector<T>;
@@ -11,68 +11,26 @@ export type AbsoluteCellPosition<T extends GuardModelBase> = {
 
 
 
-export const mockModel = g.model("movie", {
-	id: g.int().id().default(autoIncrement).label("ID").axcelReadonly(),
-	title: g.string().label("タイトル").min(1),
-	status: g.enum("Status", ["Ok", "Limited", "Suspended"]).label("ステータス").enumLabels({
+export const mockModel = a.model("movie", {
+	id: a.int().id().default(autoIncrement).label("ID").axcelReadonly(),
+	title: a.string().label("タイトル").min(1),
+	status: a.enum("Status", ["Ok", "Limited", "Suspended"]).label("ステータス").enumLabels({
 		Ok: "公開",
 		Limited: "限定",
 		Suspended: "停止",
 	}),
-	category: g.string().label("カテゴリー"),
-	check: g.bool().label("チェック").optional(),
-	number: g.int().label("数値").optional().default(1),
-});
+	category: a.string().label("カテゴリー"),
+	check: a.bool().label("チェック").optional(),
+	number: a.int().label("数値").optional().default(1),
+}).label("テスト").desc("テスト用のモデル");
 export type MockModel = GuardModelOutput<typeof mockModel>;
-export const mockDatas: MockModel[] = [
-	{
-		id: 1,
-		title: "てすとすと",
-		status: "Ok",
-		category: "fun",
-		check: true,
-		number: 2,
-	},
-	{
-		id: 2,
-		title: "てすとすと2",
-		status: "Limited",
-		category: "funny",
-		check: false,
-		number:null
-	},
-	{
-		id: 3,
-		title: "てすとすと3",
-		status: "Suspended",
-		category: "funniest",
-		check:null,
-		number: 0,
-	},
-	{
-		id: 4,
-		title: "てすとすと4",
-		status: "Ok",
-		category: "funniest",
-		check:null,
-		number: null,
-	},
-	{
-		id: 5,
-		title: "てすとすと5",
-		status: "Ok",
-		category: "funniest",
-		check:false,
-		number: 5,
-	},
 
-];
 
-export const creator = g.model("creator", {
-	id: g.int().id().default(autoIncrement).label("ID").axcelReadonly(),
-	name: g.string().label("名前"),
-	country: g.string().label("国"),
-	website: g
+export const creator = a.model("creator", {
+	id: a.int().id().default(autoIncrement).label("ID").axcelReadonly(),
+	name: a.string().label("名前"),
+	country: a.string().label("国"),
+	website: a
 		.string()
 		.label("サイトURL")
 		.regex({
@@ -82,13 +40,13 @@ export const creator = g.model("creator", {
 		}),
 });
 
-export const language = g.model("language", {
-	id: g.int().id().default(autoIncrement).label("ID").axcelReadonly(),
-	name: g.string().label("名前"),
-	firstRelease: g.dateTime().label("初版リリース日").dateOnly(),
-	latestVersion: g.string().label("バージョン"),
-	latestRelease: g.dateTime().label("最新リリース日").dateOnly(),
-	website: g
+export const language = a.model("language", {
+	id: a.int().id().default(autoIncrement).label("ID").axcelReadonly(),
+	name: a.string().label("名前"),
+	firstRelease: a.dateTime().label("初版リリース日").dateOnly(),
+	latestVersion: a.string().label("バージョン"),
+	latestRelease: a.dateTime().label("最新リリース日").dateOnly(),
+	website: a
 		.string()
 		.label("公式サイトURL")
 		.regex({
@@ -97,14 +55,14 @@ export const language = g.model("language", {
 			hint: "http://かhttps://から始まるURLを入力してください",
 		})
 		.optional(),
-	creator: g.relation(
+	creator: a.relation(
 		creator,
 		{
-			creatorId: g.int(),
+			creatorId: a.int(),
 		},
 		["id"],
 	),
-	funny: g.bool().anotate({ label: "楽しい", description: '関数宣言が"fun"かどうか' }),
+	funny: a.bool().anotate({ label: "楽しい", description: '関数宣言が"fun"かどうか' }),
 });
 
 /* 
@@ -125,7 +83,7 @@ export const mockModel2 = g.model("Movie", {
 		["id"],
 	),
 }); */
-g.prismaHeader(`
+a.prismaHeader(`
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -134,4 +92,4 @@ generator client {
 	provider        = "prisma-client-js"
 }
 `);
-export default g;
+export default a;

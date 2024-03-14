@@ -1,16 +1,16 @@
-import { PrismaClient } from "@prisma/client";
+import { NameWithAttributes } from "../WithAttributes";
 import { GuardHasDefault, GuardOptional, GuardValue } from "./GuardValue";
 import { GuardField, GuardRelation, GuardRelationList } from "./guard";
-import { FluentOperation } from "@prisma/client/runtime/library";
 
-export class GuardModel<T extends string, S extends GuardSchema<T>> {
-	name: string;
+export class GuardModel<T extends string, S extends GuardSchema<T>> extends NameWithAttributes {
 	modelSchema: S;
 	constructor(name: string, schema: S) {
+		super(name);
 		this.name = name;
 		this.modelSchema = schema;
 		this.check();
 	}
+
 	check() {
 		for (const key in this.modelSchema) {
 			if (key.startsWith("__"))

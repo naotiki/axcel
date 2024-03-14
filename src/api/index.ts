@@ -2,9 +2,8 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { authHandler, verifyAuth } from "@hono/auth-js";
-import { gValidator as gCreateValidator } from "@/library/guard/hono/gValidator";
 import * as Y from "yjs";
-import g, { mockModel } from "@/front/components/Table/TableDevTest";
+import a from "@/front/components/Table/TableDevTest";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { GuardModelColumn, GuardModelOutput } from "@/library/guard/GuardModel";
 import { WebsocketProvider } from "y-websocket";
@@ -36,7 +35,7 @@ const axcelPost = api.post(
 	),
 	async (c) => {
 		const { model: modelName } = c.req.valid("param");
-		const model = g.models.find((m) => m.name === modelName);
+		const model = a.models.find((m) => m.name === modelName);
 		if (!model) {
 			return c.json({ success: false, error: "model not found" }, 404);
 		}
@@ -138,7 +137,7 @@ const axcelGet = api.get(
 	),
 	async (c) => {
 		const { model: modelName } = c.req.valid("param");
-		const model = g.models.find((m) => m.name === modelName);
+		const model = a.models.find((m) => m.name === modelName);
 		if (!model) {
 			return c.json({ success: false, error: "model not found" }, 404);
 		}

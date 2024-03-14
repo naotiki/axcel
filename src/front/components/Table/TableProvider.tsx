@@ -107,6 +107,9 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 				
 			}
 		});
+		return () => {
+			wsProvider.destroy();
+		}
 	}, [authUser.name,model]);
 	if (!user || !users || !changes || !data || !tableChangesRepo.current || !userRepo.current || locked)
 		return (
