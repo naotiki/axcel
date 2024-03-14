@@ -45,11 +45,8 @@ const axcelPost = api.post(
 			WebSocketPolyfill: WebSocket,
 		});
 		wsProvider.connect();
-		const tableChangesRepo = new TableChangesRepository(doc);
-		tableChangesRepo.setMetaData("locked", true);
-		const finalize = async () => {
-			tableChangesRepo.setMetaData("locked", false);
-			await new Promise((res, rej) => {
+		const waitYSync = () =>
+			new Promise((res, rej) => {
 				wsProvider.once("sync", (isSynced: boolean) => {
 					if (isSynced) {
 						res(true);
@@ -58,6 +55,12 @@ const axcelPost = api.post(
 					}
 				});
 			});
+		await waitYSync();
+		const tableChangesRepo = new TableChangesRepository(doc);
+		tableChangesRepo.setMetaData("locked", true);
+		const finalize = async () => {
+			tableChangesRepo.setMetaData("locked", false);
+			await waitYSync();
 			wsProvider.destroy();
 		};
 		const changes = tableChangesRepo.getState();
