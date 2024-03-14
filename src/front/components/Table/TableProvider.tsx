@@ -287,7 +287,7 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 							return (
 								<tr
 									key={sId}
-									className={changes?.deletions.includes(o.__id) ? css({ backgroundColor: "#ffcccc" }) : ""}
+									className={changes?.deletions?.map(s=>genSelectorId(s)).includes(genSelectorId(o.__id)) ? css({ backgroundColor: "#ffcccc" }) : ""}
 								>
 									<ActionCell
 										changed={changes?.isChangedRow(o.__id) ?? null}

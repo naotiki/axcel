@@ -94,7 +94,7 @@ export class TableChangesRepository<T extends GuardModelBase> {
 		return false;
 	}
 	deleteRow(id: GuardModelSelector<T>) {
-		if (this.deletions.toArray().includes(id as GuardModelSelector<T>)) {
+		if (this.deletions.toArray().map(s=>genSelectorId(s)).includes(genSelectorId(id))) {
 			return;
 		}
 		if (id.__newuuid && this.addtions.has(id.__newuuid)) {
@@ -107,7 +107,7 @@ export class TableChangesRepository<T extends GuardModelBase> {
 		this.deletions.push([id]);
 	}
 	recoverRow(id: GuardModelSelector<T>) {
-		const index = this.deletions.toArray().indexOf(id);
+		const index = this.deletions.toArray().map(s=>genSelectorId(s)).indexOf(genSelectorId(id));
 		if (index >= 0) {
 			this.deletions.delete(index, 1);
 		}
@@ -153,7 +153,7 @@ export class TableChangesRepository<T extends GuardModelBase> {
 		}
 	}
 	isChanged(location: AbsoluteCellPosition<T>): CellChangeType | null {
-		if (this.deletions.toArray().includes(location.id)) {
+		if (this.deletions.toArray().map(s=>genSelectorId(s)).includes(genSelectorId(location.id))) {
 			return "delete";
 		}
 		if (this.changes.has(genCellId(location))) {
@@ -181,7 +181,7 @@ export class TableChangesRepository<T extends GuardModelBase> {
 				return location.id.__newuuid ? this.addtions[location.id.__newuuid]?.[location.column] : undefined;
 			},
 			isChangedRow(id: GuardModelSelector<T>): RowChangeType | null {
-				if (this.deletions.includes(id)) {
+				if (this.deletions.map(s=>genSelectorId(s)).includes(genSelectorId(id))) {
 					return "delete";
 				}
 				if (id.__newuuid && this.addtions[id.__newuuid]) {
@@ -190,7 +190,7 @@ export class TableChangesRepository<T extends GuardModelBase> {
 				return null;
 			},
 			isChanged(location: AbsoluteCellPosition<T>): CellChangeType | null {
-				if (this.deletions.includes(location.id)) {
+				if (this.deletions.map(s=>genSelectorId(s)).includes(genSelectorId(location.id))) {
 					return "delete";
 				}
 				if (this.changes[genCellId(location)]) {
