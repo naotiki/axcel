@@ -4,8 +4,8 @@ import { PrismaType } from "../guard";
 export abstract class GuardNumbers extends GuardValue<number> {
 	minValue?: number;
 	maxValue?: number;
-	constructor(type: PrismaType) {
-		super(type, true);
+	constructor(label:string,type: PrismaType) {
+		super(label,type, true);
 	}
 	min(min: number) {
 		this.minValue = min;
@@ -43,7 +43,7 @@ export abstract class GuardNumbers extends GuardValue<number> {
 }
 export class GuardInt extends GuardNumbers {
 	constructor() {
-		super(PrismaType.Int);
+		super("整数",PrismaType.Int);
 	}
 	override validator(value: string): string[] | undefined {
 		const err = super.validator(value);
@@ -57,11 +57,11 @@ export class GuardInt extends GuardNumbers {
 }
 export class GuardFloat extends GuardNumbers {
 	constructor() {
-		super(PrismaType.Float);
+		super("小数",PrismaType.Float);
 	}
 }
 export class GuardDecimal extends GuardNumbers {
 	constructor() {
-		super(PrismaType.Decimal);
+		super("小数",PrismaType.Decimal);
 	}
 }

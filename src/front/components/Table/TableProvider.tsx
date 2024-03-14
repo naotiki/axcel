@@ -3,7 +3,7 @@ import { TableManager } from "../../model/TableManager";
 import { ZodTypeAny } from "zod";
 import { css } from "@emotion/css";
 import { v4 as uuidv4 } from "uuid";
-import { Box, Button, Stack, Loader } from "@mantine/core";
+import { Box, Button, Stack, Loader, LoadingOverlay } from "@mantine/core";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { User, UserRepository } from "../../repo/UserRepository";
@@ -111,7 +111,7 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 			wsProvider.destroy();
 		}
 	}, [authUser.name,model]);
-	if (!user || !users || !changes || !data || !tableChangesRepo.current || !userRepo.current || locked)
+	if (!user || !users || !changes || !data || !tableChangesRepo.current || !userRepo.current )
 		return (
 			<Stack
 				align="center"
@@ -125,7 +125,8 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 			</Stack>
 		);
 	return (
-		<Box maw={"100%"}>
+		<Box maw={"100%"} pos={"relative"}>
+			<LoadingOverlay visible={locked} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} />
 			<AxcelTableHeader
 				model={model}
 				changes={changes}

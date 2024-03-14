@@ -4,20 +4,21 @@ import * as Diff from "diff";
 import { AbsoluteCellPosition } from "./TableDevTest";
 import * as Y from "yjs";
 import { User, UserRepository } from "../../repo/UserRepository";
-import {
-	Changes, TableChangesRepository,
-	genSelectorId,
-	genCellId
-} from "../../repo/TableChangesRepository";
+import { Changes, TableChangesRepository, genSelectorId, genCellId } from "../../repo/TableChangesRepository";
 import { GuardValue } from "../../../library/guard/GuardValue";
 import {
 	GuardModelBase,
-	GuardModelColumn, GuardModelOutputWithId,
-	GuardModelSelector
+	GuardModelColumn,
+	GuardModelOutputWithId,
+	GuardModelSelector,
 } from "@/library/guard/GuardModel";
 import { GuardFieldDisplay } from "./GuardFieldDisplay";
 import { TableDataCell, cell } from "./TableDataCell";
 import { ActionCell } from "./ActionCell";
+import { GuardField } from "@/library/guard/guard";
+import { useDisclosure } from "@mantine/hooks";
+import { Button, Popover, Text } from "@mantine/core";
+import React from "react";
 const header = css({
 	position: "sticky",
 	top: 0,
@@ -47,7 +48,13 @@ export type AxcelTableProps<M extends GuardModelBase> = {
 	userRepo: UserRepository;
 };
 export function AxcelTable<M extends GuardModelBase>({
-	model, data, changes, user, users, tableChangesRepo, userRepo,
+	model,
+	data,
+	changes,
+	user,
+	users,
+	tableChangesRepo,
+	userRepo,
 }: AxcelTableProps<M>) {
 	const [selectedCell, setSelectedCell] = useState<string | null>(null);
 	const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -63,11 +70,7 @@ export function AxcelTable<M extends GuardModelBase>({
 				<tr>
 					<th className={actionCell}>操作</th>
 					{Object.entries(model.modelSchema).map(([key, value]) => {
-						return (
-							<th className={cell} key={key}>
-								{value.attrs.label ?? key}
-							</th>
-						);
+						return <AxcelTableTh key={key} field={value} name={value.attrs.label ?? key} />;
 					})}
 				</tr>
 			</thead>
@@ -77,9 +80,11 @@ export function AxcelTable<M extends GuardModelBase>({
 					return (
 						<tr
 							key={sId}
-							className={changes?.deletions?.map((s) => genSelectorId(s)).includes(genSelectorId(o.__id))
-								? css({ backgroundColor: "#ffcccc" })
-								: ""}
+							className={
+								changes?.deletions?.map((s) => genSelectorId(s)).includes(genSelectorId(o.__id))
+									? css({ backgroundColor: "#ffcccc" })
+									: ""
+							}
 						>
 							<ActionCell
 								changed={changes?.isChangedRow(o.__id) ?? null}
@@ -96,7 +101,8 @@ export function AxcelTable<M extends GuardModelBase>({
 								}}
 								onRowDelete={() => {
 									tableChangesRepo.deleteRow(o.__id);
-								}} />
+								}}
+							/>
 							{Object.entries(model.modelSchema).map(([key, field]) => {
 								const loc: AbsoluteCellPosition<M> = {
 									id: o.__id,
@@ -110,9 +116,10 @@ export function AxcelTable<M extends GuardModelBase>({
 										</td>
 									);
 								}
-								const v = changes === null || !changes?.isChanged(loc) || changes?.isChanged(loc) === "delete"
-									? value
-									: changes.getValue(loc);
+								const v =
+									changes === null || !changes?.isChanged(loc) || changes?.isChanged(loc) === "delete"
+										? value
+										: changes.getValue(loc);
 								return (
 									<TableDataCell
 										changed={changes === null ? null : changes.isChanged(loc)}
@@ -123,7 +130,7 @@ export function AxcelTable<M extends GuardModelBase>({
 										selected={selectedCell && selectedCell === genCellId(loc) ? user?.user.color : undefined}
 										selectingUsers={users
 											.filter(
-												(u) => u.user._uid !== user?.user._uid && u.cursor?.selectedCellId === genCellId(loc)
+												(u) => u.user._uid !== user?.user._uid && u.cursor?.selectedCellId === genCellId(loc),
 											)
 											.map((u) => ({ name: u.user.name, color: u.user.color }))}
 										onSelected={(l) => {
@@ -167,7 +174,8 @@ export function AxcelTable<M extends GuardModelBase>({
 												}
 												count += part.value.length;
 											}
-										}} />
+										}}
+									/>
 								);
 							})}
 						</tr>
@@ -196,7 +204,8 @@ export function AxcelTable<M extends GuardModelBase>({
 									}}
 									onRowDelete={() => {
 										tableChangesRepo.deleteRow(selector);
-									}} />
+									}}
+								/>
 								{Object.entries(model.modelSchema).map(([key, field]) => {
 									const loc: AbsoluteCellPosition<M> = {
 										id: selector,
@@ -218,10 +227,13 @@ export function AxcelTable<M extends GuardModelBase>({
 											key={key}
 											field={field}
 											value={v instanceof Y.Text || (v !== null && v !== undefined) ? v.toString() : v}
-											selected={selectedCell && selectedCell === genCellId(loc) ? user?.user.color : undefined}
+											selected={
+												selectedCell && selectedCell === genCellId(loc) ? user?.user.color : undefined
+											}
 											selectingUsers={users
 												.filter(
-													(u) => u.user._uid !== user?.user._uid && u.cursor?.selectedCellId === genCellId(loc)
+													(u) =>
+														u.user._uid !== user?.user._uid && u.cursor?.selectedCellId === genCellId(loc),
 												)
 												.map((u) => ({ name: u.user.name, color: u.user.color }))}
 											onSelected={(l) => {
@@ -234,7 +246,7 @@ export function AxcelTable<M extends GuardModelBase>({
 											onValueReset={() => {
 												tableChangesRepo.update(
 													loc,
-													field instanceof GuardValue && field._default ? undefined : null
+													field instanceof GuardValue && field._default ? undefined : null,
 												);
 											}}
 											onValueChanged={(v, old) => {
@@ -259,7 +271,8 @@ export function AxcelTable<M extends GuardModelBase>({
 													}
 													count += part.value.length;
 												}
-											}} />
+											}}
+										/>
 									);
 								})}
 							</tr>
@@ -269,3 +282,38 @@ export function AxcelTable<M extends GuardModelBase>({
 		</table>
 	);
 }
+
+const AxcelTableTh = React.memo(({ field, name }: { field: GuardField; name: string }) => {
+	const [opened, { close, open }] = useDisclosure(false);
+	return (
+		<th className={cell}>
+			<Popover position="top" withArrow shadow="sm" opened={opened}>
+				<Popover.Target>
+					<Text onMouseEnter={open} onMouseLeave={close}>
+						{name}
+					</Text>
+				</Popover.Target>
+				<Popover.Dropdown style={{ maxWidth: "16rem" }}>
+					<Text size="md" fw={700}>
+						{name}
+					</Text>
+					<Text>{field.attrs.description ?? ""}</Text>
+					{field instanceof GuardValue && (
+						<>
+							<Text>タイプ : {field._typeLabel}</Text>
+							{field._default && (
+								<Text>
+									デフォルト値 :{" "}
+									{typeof field._default !== "object" ? field._default?.toString() : "システム生成"}
+								</Text>
+							)}
+							{[field._id, field._optional, field._readonly, field._unique].map(
+								(a, i) => a ? ["ID", "空を許可", "変更不可", "ユニーク"][i]: undefined,
+							).filter(e=>e).join(", ")}
+						</>
+					)}
+				</Popover.Dropdown>
+			</Popover>
+		</th>
+	);
+});

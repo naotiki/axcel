@@ -8,7 +8,7 @@ export class GuardList<T extends GuardValue<E>,E> extends GuardValue<E[]>{
     }
     
     constructor(value:T){
-        super(PrismaType.List,false);
+        super(`${value._typeLabel}のリスト`,PrismaType.List,false);
         this.value = value;
     }
     override defValidate(errorlist: string[]): void {

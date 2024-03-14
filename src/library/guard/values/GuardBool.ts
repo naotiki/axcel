@@ -12,7 +12,7 @@ export class GuardBool extends GuardValue<boolean> {
         }
     }
     constructor() {
-        super(PrismaType.Boolean,false);
+        super("真偽値",PrismaType.Boolean,false);
     }
     override defValidate(_err:string[]){
         return;

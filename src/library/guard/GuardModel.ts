@@ -1,14 +1,18 @@
-import { NameWithAttributes } from "../WithAttributes";
+import { WithAttributes } from "./WithAttributes";
 import { GuardHasDefault, GuardOptional, GuardValue } from "./GuardValue";
 import { GuardField, GuardRelation, GuardRelationList } from "./guard";
 
-export class GuardModel<T extends string, S extends GuardSchema<T>> extends NameWithAttributes {
+export class GuardModel<T extends string, S extends GuardSchema<T>> extends WithAttributes {
 	modelSchema: S;
+	name:string
 	constructor(name: string, schema: S) {
-		super(name);
+		super();
 		this.name = name;
 		this.modelSchema = schema;
 		this.check();
+	}
+	dispName() {
+		return this.attrs.label ?? this.name;
 	}
 
 	check() {
