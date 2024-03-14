@@ -163,19 +163,10 @@ const axcelGet = api.get(
 export type AxcelPost = typeof axcelPost;
 export type AxcelGet = typeof axcelGet;
 
-const createMock = api.post("/mock", gCreateValidator(mockModel), async (c) => {
-	const result: GuardModelOutput<typeof mockModel> = await prisma.movie.create({
-		data: {},
-	});
-	return c.json(result);
-});
 
-const getAllMock = api.get("/mock", async (c) => {
-	const result: GuardModelOutput<typeof mockModel>[] = await prisma.movie.findMany();
-	return c.json(result);
-});
 
-export type ApiMock = typeof createMock;
+
+
 
 export type TestZodType = typeof zodTest;
 const zodTest = api.get(

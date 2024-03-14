@@ -7,7 +7,7 @@ import {
 import { RowChangeType } from "../../repo/TableChangesRepository";
 import { IconCaretDownFilled, IconTrash } from "@tabler/icons-react";
 import React from "react";
-import { actionCell } from "./TableProvider";
+import { actionCell } from "./AxcelTable";
 
 type ActionCellProps = {
 	selected: boolean;

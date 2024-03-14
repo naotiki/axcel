@@ -18,9 +18,25 @@ import React from "react";
 import { GuardFieldInput } from "./GuardFieldInput";
 import { GuardFieldDisplay } from "./GuardFieldDisplay";
 import { EditingBadges } from "./EditingBadges";
-import { focusedDataCell, dataCell, changedCell } from "./TableProvider";
 import { ErrorMaker } from "./ErrorMarker";
-
+export const cell = css({
+	//padding: "0.25em",
+	width: "8em",
+	maxWidth: "8em",
+	border: "1px solid #bbbbbb",
+});
+const dataCell = css(cell, {
+	overflow: "visible",
+	//backgroundColor: "#ffffff",
+});
+const changedCell = css(dataCell, {
+	backgroundColor: "#ffffbb",
+});
+const focusedDataCell = (color: string) =>
+	css(dataCell, {
+		//backgroundColor: "#bbbbff88",
+		outline: `2px solid ${color}`,
+	});
 type TableDataCellProps<M extends GuardModelBase> = {
 	value: string | null | undefined;
 	field: GuardField;
@@ -71,7 +87,7 @@ export function TableDataCell<M extends GuardModelBase>(props: TableDataCellProp
 							値を「空」にする
 						</Button>
 					)}
-					{props.value !== undefined && props.field instanceof GuardValue && props.field._default && (
+					{props.changed === "add" && props.value !== undefined && props.field instanceof GuardValue && props.field._default && (
 						<Button
 							fullWidth
 							radius={"xs"}

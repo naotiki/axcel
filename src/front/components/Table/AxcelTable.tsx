@@ -1,0 +1,271 @@
+import { useState } from "react";
+import { css } from "@emotion/css";
+import * as Diff from "diff";
+import { AbsoluteCellPosition } from "./TableDevTest";
+import * as Y from "yjs";
+import { User, UserRepository } from "../../repo/UserRepository";
+import {
+	Changes, TableChangesRepository,
+	genSelectorId,
+	genCellId
+} from "../../repo/TableChangesRepository";
+import { GuardValue } from "../../../library/guard/GuardValue";
+import {
+	GuardModelBase,
+	GuardModelColumn, GuardModelOutputWithId,
+	GuardModelSelector
+} from "@/library/guard/GuardModel";
+import { GuardFieldDisplay } from "./GuardFieldDisplay";
+import { TableDataCell, cell } from "./TableDataCell";
+import { ActionCell } from "./ActionCell";
+const header = css({
+	position: "sticky",
+	top: 0,
+	zIndex: 1,
+	backgroundColor: "#f0f0f0",
+	borderBottom: "3px solid #000",
+});
+
+export const actionCell = css(cell, {
+	//padding: "0.25em",
+	//width: "4em",
+	paddingInline: "0.5em",
+	width: "auto",
+	//maxWidth: "4em",
+	backgroundColor: "#ffffff",
+});
+const readOnlyCell = css(cell, {
+	backgroundColor: "#f0f0f099",
+});
+export type AxcelTableProps<M extends GuardModelBase> = {
+	model: M;
+	data: GuardModelOutputWithId<M>[];
+	changes: Changes<M>;
+	user: User;
+	users: User[];
+	tableChangesRepo: TableChangesRepository<M>;
+	userRepo: UserRepository;
+};
+export function AxcelTable<M extends GuardModelBase>({
+	model, data, changes, user, users, tableChangesRepo, userRepo,
+}: AxcelTableProps<M>) {
+	const [selectedCell, setSelectedCell] = useState<string | null>(null);
+	const [selectedRows, setSelectedRows] = useState<string[]>([]);
+	return (
+		<table
+			className={css({
+				tableLayout: "fixed",
+				textAlign: "center",
+				borderCollapse: "collapse",
+			})}
+		>
+			<thead className={header}>
+				<tr>
+					<th className={actionCell}>操作</th>
+					{Object.entries(model.modelSchema).map(([key, value]) => {
+						return (
+							<th className={cell} key={key}>
+								{value.attrs.label ?? key}
+							</th>
+						);
+					})}
+				</tr>
+			</thead>
+			<tbody>
+				{data.map((o) => {
+					const sId = genSelectorId(o.__id);
+					return (
+						<tr
+							key={sId}
+							className={changes?.deletions?.map((s) => genSelectorId(s)).includes(genSelectorId(o.__id))
+								? css({ backgroundColor: "#ffcccc" })
+								: ""}
+						>
+							<ActionCell
+								changed={changes?.isChangedRow(o.__id) ?? null}
+								selected={selectedRows.includes(sId)}
+								onChange={(v) => {
+									if (v) {
+										setSelectedRows((s) => [...s, sId]);
+									} else {
+										setSelectedRows((s) => s.filter((r) => r !== sId));
+									}
+								}}
+								onRowRecover={() => {
+									tableChangesRepo.recoverRow(o.__id);
+								}}
+								onRowDelete={() => {
+									tableChangesRepo.deleteRow(o.__id);
+								}} />
+							{Object.entries(model.modelSchema).map(([key, field]) => {
+								const loc: AbsoluteCellPosition<M> = {
+									id: o.__id,
+									column: key as GuardModelColumn<M>,
+								};
+								const value = o.data[key as GuardModelColumn<M>];
+								if (field._readonly) {
+									return (
+										<td className={readOnlyCell} key={key}>
+											<GuardFieldDisplay field={field} value={value?.toString()} />
+										</td>
+									);
+								}
+								const v = changes === null || !changes?.isChanged(loc) || changes?.isChanged(loc) === "delete"
+									? value
+									: changes.getValue(loc);
+								return (
+									<TableDataCell
+										changed={changes === null ? null : changes.isChanged(loc)}
+										loc={loc}
+										key={key}
+										field={field}
+										value={v !== null && v !== undefined ? v.toString() : v}
+										selected={selectedCell && selectedCell === genCellId(loc) ? user?.user.color : undefined}
+										selectingUsers={users
+											.filter(
+												(u) => u.user._uid !== user?.user._uid && u.cursor?.selectedCellId === genCellId(loc)
+											)
+											.map((u) => ({ name: u.user.name, color: u.user.color }))}
+										onSelected={(l) => {
+											const id = genCellId(l);
+											setSelectedCell(id);
+											userRepo.updateUserCursor({
+												selectedCellId: id,
+											});
+										}}
+										onValueReset={() => {
+											tableChangesRepo.removeCellChange(loc);
+										}}
+										onValueChanged={(v, old) => {
+											if (changes?.isChangedRow(loc.id) === "delete") return;
+											if (!field._isFreeEdit || v === undefined || v === null) {
+												console.log("not free", v);
+												if (tableChangesRepo.update(loc, v) === false) {
+													tableChangesRepo.addChange(loc, {
+														column: loc.column,
+														__id: loc.id,
+														new: v,
+													});
+												}
+												return;
+											}
+											const yText = (tableChangesRepo.getValue(loc) as Y.Text | null | undefined) ?? null;
+											if (yText === null) {
+												tableChangesRepo.addChange(loc, {
+													column: loc.column,
+													__id: loc.id,
+													new: new Y.Text(v),
+												});
+												return;
+											}
+											let count = 0;
+											for (const part of Diff.diffChars(old ?? "", v)) {
+												if (part.added) {
+													yText.insert(count, part.value);
+												} else if (part.removed) {
+													yText.delete(count, part.value.length);
+												}
+												count += part.value.length;
+											}
+										}} />
+								);
+							})}
+						</tr>
+					);
+				})}
+				{changes?.addtions &&
+					Object.entries(changes.addtions).map(([id, addition]) => {
+						const selector = { __newuuid: id } as GuardModelSelector<M>;
+						const sId = genSelectorId(selector);
+						return (
+							<tr
+								key={id}
+								className={css({
+									backgroundColor: "#ccffcc",
+								})}
+							>
+								<ActionCell
+									changed={changes?.isChangedRow(selector)}
+									selected={selectedRows.includes(sId)}
+									onChange={(v) => {
+										if (v) {
+											setSelectedRows((s) => [...s, sId]);
+										} else {
+											setSelectedRows((s) => s.filter((r) => r !== sId));
+										}
+									}}
+									onRowDelete={() => {
+										tableChangesRepo.deleteRow(selector);
+									}} />
+								{Object.entries(model.modelSchema).map(([key, field]) => {
+									const loc: AbsoluteCellPosition<M> = {
+										id: selector,
+										column: key as GuardModelColumn<M>,
+									};
+									const value = addition[key as keyof M["modelSchema"]];
+									if (field._readonly) {
+										return (
+											<td className={readOnlyCell} key={key}>
+												<GuardFieldDisplay field={field} value={value?.toString()} />
+											</td>
+										);
+									}
+									const v = changes === null || !changes?.isChanged(loc) ? value : changes.getValue(loc);
+									return (
+										<TableDataCell<M>
+											changed={"add"}
+											loc={loc}
+											key={key}
+											field={field}
+											value={v instanceof Y.Text || (v !== null && v !== undefined) ? v.toString() : v}
+											selected={selectedCell && selectedCell === genCellId(loc) ? user?.user.color : undefined}
+											selectingUsers={users
+												.filter(
+													(u) => u.user._uid !== user?.user._uid && u.cursor?.selectedCellId === genCellId(loc)
+												)
+												.map((u) => ({ name: u.user.name, color: u.user.color }))}
+											onSelected={(l) => {
+												const id = genCellId(l);
+												setSelectedCell(id);
+												userRepo.updateUserCursor({
+													selectedCellId: id,
+												});
+											}}
+											onValueReset={() => {
+												tableChangesRepo.update(
+													loc,
+													field instanceof GuardValue && field._default ? undefined : null
+												);
+											}}
+											onValueChanged={(v, old) => {
+												if (!field._isFreeEdit || v === undefined || v === null) {
+													console.log("not free", v);
+													if (tableChangesRepo.update(loc, v) === false) {
+														throw new Error("illigal");
+													}
+													return;
+												}
+												const yText = (tableChangesRepo.getValue(loc) as Y.Text | null | undefined) ?? null;
+												if (yText === null) {
+													tableChangesRepo.update(loc, new Y.Text(v));
+													return;
+												}
+												let count = 0;
+												for (const part of Diff.diffChars(old ?? "", v)) {
+													if (part.added) {
+														yText.insert(count, part.value);
+													} else if (part.removed) {
+														yText.delete(count, part.value.length);
+													}
+													count += part.value.length;
+												}
+											}} />
+									);
+								})}
+							</tr>
+						);
+					})}
+			</tbody>
+		</table>
+	);
+}

@@ -28,7 +28,7 @@ export class GuardModel<T extends string, S extends GuardSchema<T>> {
 		return Object.entries(this.modelSchema).filter(([k, v]) => v instanceof GuardValue && v._id);
 	}
 	//完全識別用IDを付与
-	injectId(value: GuardModelOutput<GuardModel<T, S>>) {
+	injectId(value: GuardModelOutput<this>) :GuardModelOutputWithId<this>{
 		return {
 			__id: Object.fromEntries(
 				this.getIdEntries().map(([k, v]) => [k, value[k as keyof typeof value]]),
@@ -38,11 +38,14 @@ export class GuardModel<T extends string, S extends GuardSchema<T>> {
 			},
 		};
 	}
-	injectIdList(values: GuardModelOutput<GuardModel<T, S>>[]) {
+	injectIdList(values: GuardModelOutput<this>[]) {
 		return values.map((v) => this.injectId(v));
 	}
 }
-
+export type GuardModelOutputWithId<T extends GuardModelBase> = {
+	__id: GuardModelSelector<T>;
+	data: GuardModelOutput<T>;
+}
 export type GuardModelSelector<T extends GuardModel<string, GuardSchema<string>>> = {
 	[K in keyof GuardModelOutput<T>]?: GuardModelOutput<T>[K];
 } & {
