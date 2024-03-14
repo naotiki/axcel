@@ -102,10 +102,10 @@ type TableProviderProps<M extends GuardModelBase> = {
 //type CellLocation = AbsoluteCellPosition<typeof mockModel>;
 
 export function TableProvider<M extends GuardModelBase>({ model, ...props }: TableProviderProps<M>) {
-	const userRepo = useRef<UserRepository<M> | null>(null);
+	const userRepo = useRef<UserRepository | null>(null);
 	const tableChangesRepo = useRef<TableChangesRepository<M> | null>(null);
-	const [user, setUser] = useState<User<M> | null>(null);
-	const [users, setUsers] = useState<User<M>[]>([]);
+	const [user, setUser] = useState<User| null>(null);
+	const [users, setUsers] = useState<User[]>([]);
 	const authUser = useUser();
 	const [changes, setChanges] = useState<Changes<M> | null>(null);
 	const [locked, setLocked] = useState<boolean | null>(null);
@@ -142,7 +142,6 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 				const meta = tableChangesRepo.current.getMetaData();
 				setLocked(meta.locked ?? false);
 				setChanges(tableChangesRepo.current.getState());
-				console.log(meta.updatedAt, lastUpdated.current);
 				if (meta.updatedAt && lastUpdated.current && meta.updatedAt > lastUpdated.current) {
 					hc<AxcelGet>("http://localhost:8080/api")
 						.axcel[":model"].$get({ param: { model: model.name } })
@@ -329,7 +328,7 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 												loc={loc}
 												key={key}
 												field={field}
-												value={v instanceof Y.Text || (v !== null && v !== undefined) ? v.toString() : v}
+												value={ (v !== null && v !== undefined) ? v.toString() : v}
 												selected={
 													selectedCell && selectedCell === genCellId(loc) ? user?.user.color : undefined
 												}
@@ -337,14 +336,14 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 													.filter(
 														(u) =>
 															u.user._uid !== user?.user._uid &&
-															u.cursor?.selectedCell?.column === loc.column &&
-															u.cursor?.selectedCell?.id === loc.id,
+															u.cursor?.selectedCellId === genCellId(loc) 
 													)
 													.map((u) => ({ name: u.user.name, color: u.user.color }))}
 												onSelected={(l) => {
-													setSelectedCell(genCellId(l));
+													const id=genCellId(l)
+													setSelectedCell(id);
 													userRepo.current?.updateUserCursor({
-														selectedCell: l,
+														selectedCellId: id,
 													});
 												}}
 												onValueReset={() => {
@@ -442,14 +441,14 @@ export function TableProvider<M extends GuardModelBase>({ model, ...props }: Tab
 														.filter(
 															(u) =>
 																u.user._uid !== user?.user._uid &&
-																u.cursor?.selectedCell?.column === loc.column &&
-																u.cursor?.selectedCell?.id === loc.id,
+																u.cursor?.selectedCellId === genCellId(loc) 
 														)
 														.map((u) => ({ name: u.user.name, color: u.user.color }))}
 													onSelected={(l) => {
-														setSelectedCell(genCellId(l));
+														const id=genCellId(l)
+														setSelectedCell(id);
 														userRepo.current?.updateUserCursor({
-															selectedCell: l,
+															selectedCellId: id,
 														});
 													}}
 													onValueReset={() => {

@@ -8,16 +8,16 @@ type UserData = {
 	name: string;
 	color: string;
 };
-type UserCursor<M extends GuardModelBase> = {
-	selectedCell?: AbsoluteCellPosition<M>;
+type UserCursor = {
+	selectedCellId?: string;
 	relativeCursorPos?: Y.RelativePosition;
 };
 type UserMetaData = {
 	locked: boolean;
 };
-export type User<M extends GuardModelBase> = {
+export type User = {
 	user: UserData;
-	cursor?: UserCursor<M>;
+	cursor?: UserCursor;
 	meta?: UserMetaData;
 };
 
@@ -53,15 +53,15 @@ export function getRandomName() {
 	return names[Math.floor(Math.random() * names.length)];
 }
 
-export class UserRepository<M extends GuardModelBase> {
+export class UserRepository {
 	private awareness: awarenessProtocol.Awareness;
-	private user: User<M>;
-	getUser(): Readonly<User<M>> {
+	private user: User;
+	getUser(): Readonly<User> {
 		return this.user;
 	}
 	constructor(awareness: awarenessProtocol.Awareness, user: { name: string; color: string }) {
 		this.awareness = awareness;
-		const u:Required<User<M>> = {
+		const u:Required<User> = {
 			user: {
 				_uid: uuidv4(),
 				name: user.name,
@@ -84,7 +84,7 @@ export class UserRepository<M extends GuardModelBase> {
 			meta: this.user.meta,
 		};
 	}
-	updateUserCursor(cursor: UserCursor<M>) {
+	updateUserCursor(cursor: UserCursor) {
 		this.awareness.setLocalStateField("cursor", { ...cursor });
 		this.user = {
 			user: this.user.user,
@@ -102,24 +102,24 @@ export class UserRepository<M extends GuardModelBase> {
 	}
 
 	onUserChanged(
-		callback: (users: User<M>[], changeUIDs: { added: number[]; updated: number[]; removed: number[] }) => void,
+		callback: (users: User[], changeUIDs: { added: number[]; updated: number[]; removed: number[] }) => void,
 	) {
 		this.awareness.on(
 			"change",
 			(changes: { added: number[]; updated: number[]; removed: number[] }) => {
-				this.user = this.awareness.getLocalState() as User<M>;
+				this.user = this.awareness.getLocalState() as User;
 				callback(this.getUsers(), changes);
 			},
 		);
 	}
 	getUserByNumber(number: number) {
-		return this.awareness.getStates().get(number) as User<M>;
+		return this.awareness.getStates().get(number) as User;
 	}
 	getOtherUsers() {
 		return this.getUsers().filter((u) => u.user._uid !== this.user.user._uid);
 	}
 	getUsers() {
 		//APIからの接続は除外
-		return Array.from(this.awareness.getStates().values()).filter(u=>u.user) as User<M>[];
+		return Array.from(this.awareness.getStates().values()).filter(u=>u.user) as User[];
 	}
 }
