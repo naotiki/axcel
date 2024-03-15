@@ -1,7 +1,7 @@
 import { autoIncrement, now } from "../guard/ValueProviders";
-import { GuardGenerator } from "../guard/GuardGenerator";
+import { Axcel } from "../guard/GuardGenerator";
 import { GuardModelInput, GuardModelOutput } from "../guard/GuardModel";
-const g= new GuardGenerator();
+const g= new Axcel();
 const category = g.model("Category", {
 	id: g.int().id().default(autoIncrement),
 	name: g.string(),

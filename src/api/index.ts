@@ -3,13 +3,12 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { authHandler, verifyAuth } from "@hono/auth-js";
 import * as Y from "yjs";
-import a from "@/front/components/Table/TableDevTest";
+import a from "@/TableDevTest";
 import { Prisma, PrismaClient } from "@prisma/client";
 import {
 	GuardModelBase,
 	GuardModelColumn,
 	GuardModelOutput,
-	GuardRelationRef,
 	GuardRelationRefAny,
 	GuardSchema,
 } from "@/library/guard/GuardModel";
@@ -21,13 +20,16 @@ import { GuardBool } from "@/library/guard/values/GuardBool";
 import { GuardNumbers } from "@/library/guard/values/GuardNumbers";
 import { GuardRelation } from "@/library/guard/guard";
 import { GuardDateTime } from "@/library/guard/values/GuardDateTime";
-import { WithAttributes } from "@/library/guard/WithAttributes";
 import { objectEntriesMap } from "@/objectUtils";
+import { createBunWebSocket } from "hono/bun";
+import { upgradeWebSocket } from "..";
 const api = new Hono();
+
 
 api.use("/auth/*", authHandler());
 
 api.use("/*", verifyAuth());
+
 
 api.get("/clock", (c) => {
 	return c.json({
@@ -51,7 +53,7 @@ const axcelPost = api.post(
 			return c.json({ success: false, error: "model not found" }, 404);
 		}
 		const doc = new Y.Doc();
-		const wsProvider = new WebsocketProvider("ws://localhost:8080/yws", modelName, doc, {
+		const wsProvider = new WebsocketProvider("ws://localhost:1234", modelName, doc, {
 			WebSocketPolyfill: WebSocket,
 		});
 		wsProvider.connect();
@@ -196,7 +198,7 @@ const axcelGet = api.get(
 
 			return c.json(
 				result.map((r) =>
-					objectEntriesMap(r, (k:string, v) => {
+					objectEntriesMap(r, (k: string, v) => {
 						const relation = Object.entries(model.modelSchema).find(
 							([, f]) => f instanceof GuardRelation && f.fields[k],
 						);

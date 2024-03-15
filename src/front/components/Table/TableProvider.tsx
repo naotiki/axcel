@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { css } from "@emotion/css";
 import { v4 as uuidv4 } from "uuid";
-import { Box, Button, Stack, Loader, LoadingOverlay ,Container} from "@mantine/core";
+import { Box, Button, Stack, Loader, LoadingOverlay, Container, ScrollArea } from "@mantine/core";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { User, UserRepository } from "../../repo/UserRepository";
@@ -57,7 +57,7 @@ export function AxcelTableView<M extends GuardModelBase>({ model, ...props }: Ta
 
 	useShallowEffect(() => {
 		const doc = new Y.Doc();
-		const wsProvider = new WebsocketProvider("ws://localhost:8080/yws", model.name, doc);
+		const wsProvider = new WebsocketProvider("ws://localhost:3000/api/yws", model.name, doc);
 		wsProvider.on("status", (event: { status: "disconnected" | "connecting" | "connected" }) => {
 			if (event.status === "connected") {
 			}
@@ -124,12 +124,7 @@ export function AxcelTableView<M extends GuardModelBase>({ model, ...props }: Ta
 					onLockedChange={(locked) => setLocked(locked)}
 				/>
 			</Container>
-			<div
-				className={css({
-					overflowX: "scroll",
-					maxWidth: "100vw",
-				})}
-			>
+			<ScrollArea maw={"100vw"} px={"2vw"} offsetScrollbars>
 				{
 					<AxcelTable
 						model={model}
@@ -144,9 +139,9 @@ export function AxcelTableView<M extends GuardModelBase>({ model, ...props }: Ta
 						onSortChanged={(sort) => setSort(sort)}
 					/>
 				}
-				
-			</div>
-			<Button
+			</ScrollArea>
+			<Box maw={"100vw"} px={"2vw"}>
+				<Button
 					fullWidth
 					my={10}
 					leftSection={<IconTablePlus />}
@@ -163,6 +158,7 @@ export function AxcelTableView<M extends GuardModelBase>({ model, ...props }: Ta
 				>
 					データを追加
 				</Button>
+			</Box>
 		</Box>
 	);
 }

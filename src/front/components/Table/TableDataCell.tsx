@@ -7,7 +7,7 @@ import {
 	Divider,
 	Stack
 } from "@mantine/core";
-import { AbsoluteCellPosition } from "./TableDevTest";
+import { AbsoluteCellPosition } from "@/AbsoluteCellPosition";
 import { GuardField } from "../../../library/guard/guard";
 import { CellChangeType } from "../../repo/TableChangesRepository";
 import { GuardValue } from "../../../library/guard/GuardValue";

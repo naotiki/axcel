@@ -7,3 +7,4 @@ prisma/*
 **/*.gen.ts
 .env**
 y_db/
+axcel

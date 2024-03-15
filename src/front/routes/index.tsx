@@ -1,6 +1,6 @@
 import { Card, Container, Title, Text, Stack, Group, rem, Center, Box } from "@mantine/core";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import a from "../components/Table/TableDevTest";
+import a from "../../TableDevTest";
 import { GuardModelBase } from "@/library/guard/GuardModel";
 import { RouteAnchor } from "../components/RouteAnchor";
 import { IconArrowRight, IconHome } from "@tabler/icons-react";

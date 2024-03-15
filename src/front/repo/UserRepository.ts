@@ -1,7 +1,8 @@
 import * as Y from "yjs";
 import * as awarenessProtocol from "y-protocols/awareness";
 import { v4 as uuidv4 } from "uuid";
-import { AbsoluteCellPosition, mockModel } from "../components/Table/TableDevTest";
+import { mockModel } from "../../TableDevTest";
+import { AbsoluteCellPosition } from "@/AbsoluteCellPosition";
 import { GuardModel, GuardModelBase } from "@/library/guard/GuardModel";
 type UserData = {
 	_uid: string;

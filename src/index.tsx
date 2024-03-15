@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { renderToString } from "react-dom/server";
 import api from "./api/index";
-import { initAuthConfig } from "@hono/auth-js";
+import { initAuthConfig, verifyAuth } from "@hono/auth-js";
 import Keycloak from "@auth/core/providers/keycloak";
 import { routeTree } from "./routeTree.gen";
-import { FileRoutesByPath } from "@tanstack/react-router";
+import { createBunWebSocket } from "hono/bun";
 const app = new Hono();
 app.use(
 	"*",
@@ -51,4 +51,34 @@ app.route("/api", api);
 		),
 	);
 }); */
-export default app;
+export const { upgradeWebSocket, websocket } = createBunWebSocket();
+Bun.serve({
+  fetch: app.fetch,
+  websocket,
+});
+app.use("/api/yws/**", verifyAuth());
+app.get(
+	"/api/yws/**",
+	upgradeWebSocket((c) => {
+		const path=	c.req.path.replace("/api/yws/","");
+		let yWs: WebSocket | undefined = undefined;
+		return {
+			onOpen(evt, ws) {
+				yWs = new WebSocket(`ws://localhost:1234/${path}`);
+				yWs.addEventListener("message", (e) => {
+					ws.send(e.data);
+				});
+				yWs.addEventListener("close", () => {
+					ws.close();
+				});
+			},
+			onMessage(event, ws) {
+				yWs?.send(event.data);
+			},
+			onClose: (e,ws) => {
+				yWs?.close();
+			},
+		};
+	}),
+);
+//export default app;

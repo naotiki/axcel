@@ -18,10 +18,9 @@ export function GuardFieldDisplay({ field, value }: GuardFieldDisplayProps) {
 	if (value === null) return <Text c={"gray"}>{"< 空 >"}</Text>;
 	if (value === undefined) return <Text c={"gray"}>{"< デフォルト >"}</Text>;
 	if (typeof value !== "string" && field instanceof GuardRelation) {
-		console.dir(value);
 		return (
 			<Center>
-				<HoverCard position="top" withArrow closeDelay={0} openDelay={0}>
+				<HoverCard position="top" closeDelay={100} openDelay={250}>
 					<HoverCard.Target>
 						<IconLink color={"gray"} />
 					</HoverCard.Target>

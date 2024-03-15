@@ -10,7 +10,7 @@ import { BunFile } from "bun";
 import { GuardValueAny, GuardRelation, GuardRelationList, GuardField, PrismaType } from "./guard";
 import { DefaultValueProvider } from "./ValueProviders";
 
-export class GuardGenerator {
+export class Axcel {
 	headerContent?: string;
 	prismaHeader(content: string) {
 		this.headerContent = content;

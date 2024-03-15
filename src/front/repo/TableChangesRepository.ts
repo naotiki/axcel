@@ -8,7 +8,7 @@ import {
 	GuardModelColumn,
 	GuardRelationRefAny,
 } from "../../library/guard/GuardModel";
-import { AbsoluteCellPosition } from "../components/Table/TableDevTest";
+import { AbsoluteCellPosition } from "@/AbsoluteCellPosition";
 
 export function genSelectorId<T extends GuardModelBase>(id: GuardModelSelector<T>) {
 	return (

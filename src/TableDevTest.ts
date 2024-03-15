@@ -1,18 +1,10 @@
-import { GuardGenerator as Axcel } from "../../../library/guard/GuardGenerator";
+import { Axcel } from "./library/guard/GuardGenerator";
 import {
 	GuardModelOutput,
-	GuardModelColumn,
-	GuardModelSelector,
-	GuardModelBase,
-} from "../../../library/guard/GuardModel";
-import { autoIncrement } from "../../../library/guard/ValueProviders";
+} from "./library/guard/GuardModel";
+import { autoIncrement } from "./library/guard/ValueProviders";
 
 const a = new Axcel();
-
-export type AbsoluteCellPosition<T extends GuardModelBase> = {
-	id: GuardModelSelector<T>;
-	column: GuardModelColumn<T>;
-};
 
 export const mockModel = a
 	.model("movie", {

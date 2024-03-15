@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { css } from "@emotion/css";
 import * as Diff from "diff";
-import { AbsoluteCellPosition } from "./TableDevTest";
+import { AbsoluteCellPosition } from "@/AbsoluteCellPosition";
 import * as Y from "yjs";
 import { User, UserRepository } from "../../repo/UserRepository";
 import { Changes, TableChangesRepository, genSelectorId, genCellId } from "../../repo/TableChangesRepository";
@@ -25,6 +25,8 @@ import {
 	IconCaretDownFilled,
 	IconCaretUpDown,
 	IconCaretUpFilled,
+	IconInfoCircle,
+	IconInfoSquare,
 } from "@tabler/icons-react";
 import { RouteAnchor } from "../RouteAnchor";
 export const header = css({
@@ -340,7 +342,7 @@ type AxcelTableThProps = {
 const AxcelTableTh = React.memo(({ field, name, ...props }: AxcelTableThProps) => {
 	return (
 		<th className={cell}>
-			<HoverCard position="top" withArrow shadow="sm" closeDelay={0}>
+			<HoverCard position="top" withArrow shadow="sm" openDelay={500} closeDelay={100}>
 				<HoverCard.Target>
 					<Button
 						leftSection={

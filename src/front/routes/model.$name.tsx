@@ -1,7 +1,7 @@
 import { Container, Stack, Text, Title } from "@mantine/core";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { AxcelTableView } from "../components/Table/TableProvider";
-import a from "../components/Table/TableDevTest";
+import a from "../../TableDevTest";
 
 export const Route = createFileRoute("/model/$name")({
 	loader: ({ params: { name } }: { params: { name: string } }) => {

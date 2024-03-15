@@ -3,7 +3,7 @@
     "process.d.ts",
     "vite-env.d.ts",
     "**/*.ts",
-    "**/*.tsx",
+    "**/*.tsx", "guardgen.mts",
   ],
   "exclude": ["node_modules"],
   "compilerOptions": {
