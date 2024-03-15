@@ -1,12 +1,13 @@
 import { Container, Stack, Text, Title } from "@mantine/core";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { AxcelTableView } from "../components/Table/TableProvider";
-import a from "../../TableDevTest";
+import { axcel } from "@/axcelExport";
+
 
 export const Route = createFileRoute("/model/$name")({
 	loader: ({ params: { name } }: { params: { name: string } }) => {
 		console.log("modelName", name);
-		const model = a.models.find((m) => m.name === name);
+		const model = axcel.models.find((m) => m.name === name);
 		if (!model) throw notFound();
 		console.dir(model);
 		return { model };

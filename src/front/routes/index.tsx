@@ -1,10 +1,11 @@
 import { Card, Container, Title, Text, Stack, Group, rem, Center, Box } from "@mantine/core";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import a from "../../TableDevTest";
+
 import { GuardModelBase } from "@/library/guard/GuardModel";
 import { RouteAnchor } from "../components/RouteAnchor";
 import { IconArrowRight, IconHome } from "@tabler/icons-react";
 import { useHover } from "@mantine/hooks";
+import { axcel } from "@/axcelExport";
 
 export const Route = createFileRoute("/")({
 	component: Index,
@@ -19,7 +20,7 @@ function Index() {
 					<Title order={1}>ホーム</Title>
 				</Group>
 				<Stack my={50}>
-					{a.models.map((model) => (
+					{axcel.models.map((model) => (
 						<ModelCard key={model.name} model={model} />
 					))}
 				</Stack>
