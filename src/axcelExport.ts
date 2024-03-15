@@ -1,3 +1,3 @@
-import axcel from "@/appSchema"
+import axcel from "@/example.schema"
 
 export { axcel }

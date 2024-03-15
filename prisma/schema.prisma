@@ -7,13 +7,24 @@ generator client {
 	provider        = "prisma-client-js"
 }
 
-model Movie {
+model Group {
 	id    Int @id @default(autoincrement())
+	name    String
+	contact    String
+	createdAt    DateTime @default(now())
+	updatedAt    DateTime @updatedAt
+	project    Project[]
+}
+model Project {
+	id    Int @id @default(autoincrement())
+	alias    String @unique
 	title    String
+	description    String?
+	group    Group @relation(fields: [groupId],references: [id])
+	groupId    Int
 	status    Status
-	category    String
-	check    Boolean?
-	number    Int? @default(1)
+	createdAt    DateTime @default(now())
+	updatedAt    DateTime @updatedAt
 }
 
 enum Status {
@@ -22,21 +33,3 @@ enum Status {
 	Suspended
 }
 
-model Creator {
-	id    Int @id @default(autoincrement())
-	name    String
-	country    String
-	website    String
-	language    Language[]
-}
-model Language {
-	id    Int @id @default(autoincrement())
-	name    String
-	firstRelease    DateTime
-	latestVersion    String
-	latestRelease    DateTime
-	website    String?
-	creator    Creator @relation(fields: [creatorId],references: [id])
-	creatorId    Int
-	funny    Boolean
-}

@@ -87,7 +87,13 @@ export function AxcelTableHeader<M extends GuardModelBase>({
 											props.onLockedChange(false);
 											return;
 										}
-										if(field instanceof GuardRelation){
+										if(field instanceof GuardRelation&&!value){
+											setShowValidationErrorText(true);
+											setTimeout(() => {
+												setShowValidationErrorText(false);
+											}, 5000);
+											props.onLockedChange(false);
+											return
 											//TODO
 											//throw new Error("Not implemented");
 										}

@@ -8,7 +8,7 @@ import {
 	Stack
 } from "@mantine/core";
 import { AbsoluteCellPosition } from "@/AbsoluteCellPosition";
-import { GuardField } from "../../../library/guard/guard";
+import { GuardField, GuardRelation } from "../../../library/guard/guard";
 import { CellChangeType } from "../../repo/TableChangesRepository";
 import { GuardValue } from "../../../library/guard/GuardValue";
 import { useContextMenu } from "../ContextMenuProvider";
@@ -143,7 +143,8 @@ export function TableDataCell<M extends GuardModelBase>(props: TableDataCellProp
 			<EditingBadges users={props.selectingUsers} />
 			<ErrorMaker
 				opened={!!props.selected}
-				errors={props.field instanceof GuardValue ? props.field.validate(props.value) : undefined} />
+				errors={props.field instanceof GuardValue ? props.field.validate(props.value) : props.field instanceof GuardRelation ? props.value?undefined:
+				["関連付けが必要です。"] :undefined} />
 			<div className={css({ padding: "0.25em" })}>
 				{editing ? (
 					<GuardFieldInput

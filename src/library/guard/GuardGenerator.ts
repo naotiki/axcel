@@ -61,15 +61,15 @@ export class Axcel {
 					if (field._unique) {
 						w.write(" @unique");
 					}
-					if (field._default) {
+
+					if (field instanceof GuardDateTime && field._updatedAt) {
+						w.write(" @updatedAt");
+					} else if (field._default) {
 						if (typeof field._default !== "object") {
 							w.write(` @default(${field._default})`);
 						} else {
 							w.write(` @default(${(field._default as DefaultValueProvider<GuardValueAny>).expression})`);
 						}
-					}
-					if (field instanceof GuardDateTime && field._updatedAt) {
-						w.write(" @updatedAt");
 					}
 				}
 				w.write("\n");

@@ -58,7 +58,12 @@ export function GuardFieldInput({ field, value, ...props }: GuardFieldInputProps
 					<Group>
 						<Text fw={700}>データリンク</Text>
 						<Text> - </Text>
-						<Text><RouteAnchor to="/model/$name" params={{ name: field.model.name }}>{field.model.dispName()}</RouteAnchor> と関連付けます。</Text>
+						<Text>
+							<RouteAnchor to="/model/$name" params={{ name: field.model.name }}>
+								{field.model.dispName()}
+							</RouteAnchor>{" "}
+							と関連付けます。
+						</Text>
 					</Group>
 
 					<table
@@ -116,10 +121,20 @@ export function GuardFieldInput({ field, value, ...props }: GuardFieldInputProps
 				size="100%"
 				rightSectionWidth={"auto"}
 				variant="unstyled"
-				data={Object.entries(field._enumLabels).map(([value, label]) => ({
-					value: value,
-					label: label ?? value,
-				}))}
+				data={
+					!value
+						? [
+								{ value: null, label: "未選択" },
+								...Object.entries(field._enumLabels).map(([value, label]) => ({
+									value: value,
+									label: label ?? value,
+								})),
+						  ]
+						: Object.entries(field._enumLabels).map(([value, label]) => ({
+								value: value,
+								label: label ?? value,
+						  }))
+				}
 				value={value}
 				onChange={(e) => props.onValueChange(e.currentTarget.value)}
 			/>

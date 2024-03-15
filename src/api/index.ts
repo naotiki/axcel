@@ -3,7 +3,6 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { authHandler, verifyAuth } from "@hono/auth-js";
 import * as Y from "yjs";
-import a from "@/TableDevTest";
 import { Prisma, PrismaClient } from "@prisma/client";
 import {
 	GuardModelBase,
@@ -23,6 +22,7 @@ import { GuardDateTime } from "@/library/guard/values/GuardDateTime";
 import { objectEntriesMap } from "@/objectUtils";
 import { createBunWebSocket } from "hono/bun";
 import { upgradeWebSocket } from "..";
+import { axcel } from "@/axcelExport";
 const api = new Hono();
 
 
@@ -48,7 +48,7 @@ const axcelPost = api.post(
 	),
 	async (c) => {
 		const { model: modelName } = c.req.valid("param");
-		const model = a.models.find((m) => m.name === modelName);
+		const model = axcel.models.find((m) => m.name === modelName);
 		if (!model) {
 			return c.json({ success: false, error: "model not found" }, 404);
 		}
@@ -168,7 +168,7 @@ const axcelGet = api.get(
 	async (c) => {
 		const { model: modelName } = c.req.valid("param");
 		const sort = c.req.valid("query");
-		const model = a.models.find((m) => m.name === modelName);
+		const model = axcel.models.find((m) => m.name === modelName);
 		if (!model) {
 			return c.json({ success: false, error: "model not found" }, 404);
 		}
@@ -179,12 +179,6 @@ const axcelGet = api.get(
 			};
 			const order = sort || Object.fromEntries(model.getIdEntries().map(([k]) => [k, "asc"]));
 
-			prisma.creator.findMany({
-				orderBy: {
-					id: "asc",
-				},
-				include: {},
-			});
 			const result = (await modelClient.findMany({
 				orderBy: Object.entries(order).map(([k, v]) => ({ [k]: v })),
 				include: Object.values(model.modelSchema).some((v) => v instanceof GuardRelation)
