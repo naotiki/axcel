@@ -21,7 +21,7 @@ export function GuardFieldDisplay({ field, value }: GuardFieldDisplayProps) {
 		console.dir(value);
 		return (
 			<Center>
-				<HoverCard position="top">
+				<HoverCard position="top" withArrow closeDelay={0} openDelay={0}>
 					<HoverCard.Target>
 						<IconLink color={"gray"} />
 					</HoverCard.Target>

@@ -5,9 +5,10 @@
     "dev:vite": "vite",
     "dev:hono": "bun run --watch ./src/index.tsx",
     "dev:y-websocket": "PORT=1234 YPERSISTENCE=./y_db bunx y-websocket-server",
-    "build": "vite build --mode client && vite build",
+    "build": "vite build",
     "__dev": "bun run --hot src/index.ts",
-    "_dev": "bun run dev:y-websocket & vite"
+    "_dev": "bun run dev:y-websocket & vite",
+    "pwa-assets": "pwa-assets-generator --preset minimal-2023 public/Logo.svg"
   },
   "dependencies": {
     "@auth/core": "^0.28.0",
@@ -43,6 +44,7 @@
     "@types/react": "^18.2.61",
     "@types/react-dom": "^18.2.19",
     "@types/uuid": "^9.0.8",
+    "@vite-pwa/assets-generator": "^0.2.4",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.18",
     "npm-run-all2": "^6.1.2",
@@ -54,6 +56,7 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5.4.2",
     "vite": "^5.0.12",
+    "vite-plugin-pwa": "^0.19.3",
     "vite-tsconfig-paths": "^4.3.1",
     "zod-prisma-types": "^3.1.6"
   }

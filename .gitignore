@@ -1,6 +1,7 @@
 node_modules
 bun.lockb
 dist
+dev-dist
 prisma/*
 !prisma/*.prisma
 **/*.gen.ts

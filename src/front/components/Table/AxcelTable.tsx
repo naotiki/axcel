@@ -340,7 +340,7 @@ type AxcelTableThProps = {
 const AxcelTableTh = React.memo(({ field, name, ...props }: AxcelTableThProps) => {
 	return (
 		<th className={cell}>
-			<HoverCard position="top" withArrow shadow="sm">
+			<HoverCard position="top" withArrow shadow="sm" closeDelay={0}>
 				<HoverCard.Target>
 					<Button
 						leftSection={

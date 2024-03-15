@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="512"
+   height="512"
+   viewBox="0 0 135.46667 135.46667"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.2 (b8e25be833, 2022-02-05)"
+   sodipodi:docname="Logo.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="true"
+     inkscape:document-units="mm"
+     showgrid="false"
+     units="px"
+     showguides="false"
+     inkscape:zoom="2.5620932"
+     inkscape:cx="255.8455"
+     inkscape:cy="288.24089"
+     inkscape:window-width="2560"
+     inkscape:window-height="1494"
+     inkscape:window-x="-11"
+     inkscape:window-y="-11"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g842" />
+  <defs
+     id="defs2">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient16298">
+      <stop
+         style="stop-color:#ff5b52;stop-opacity:1"
+         offset="0"
+         id="stop16294" />
+      <stop
+         style="stop-color:#ff7b35;stop-opacity:1"
+         offset="1"
+         id="stop16296" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient16298"
+       id="linearGradient16300"
+       x1="51.527401"
+       y1="135.46666"
+       x2="207.96268"
+       y2="135.46666"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.5193978,0,0,0.5193978,-6.7388237,1.6060298)" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g842">
+      <g
+         id="g5589">
+        <path
+           sodipodi:type="star"
+           style="fill:#ffffff;fill-opacity:1;stroke-width:1.00157"
+           id="path15709"
+           inkscape:flatsided="true"
+           sodipodi:sides="4"
+           sodipodi:cx="-607.31592"
+           sodipodi:cy="163.92847"
+           sodipodi:r1="419.55396"
+           sodipodi:r2="296.66943"
+           sodipodi:arg1="0.76961"
+           sodipodi:arg2="1.5550082"
+           inkscape:rounded="0.2"
+           inkscape:randomized="0"
+           d="m -305.99977,455.87727 c -82.5756,85.22507 -508.03987,91.94293 -593.26495,9.36734 -85.22507,-82.57559 -91.94293,-508.039869 -9.36734,-593.26494 82.57559,-85.22508 508.03987,-91.94294 593.26494,-9.36735 85.22508,82.575594 91.94294,508.03987 9.36735,593.26495 z"
+           transform="matrix(0.1761942,0,0,0.16754546,174.73888,40.267863)" />
+        <text
+           xml:space="preserve"
+           style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:82.4544px;line-height:1.25;font-family:'Roboto Flex';-inkscape-font-specification:'Roboto Flex Bold Italic';white-space:pre;shape-inside:url(#path15709);fill:url(#linearGradient16300);stroke-width:0.137424"
+           x="19.440344"
+           y="96.600426"
+           id="text4742"
+           transform="translate(3.7443498,13.526992)"><tspan
+             x="15.695994"
+             y="83.073434"
+             id="tspan5606"><tspan
+               style="font-style:normal;font-weight:600;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI Semi-Bold'"
+               id="tspan5604">Ax</tspan></tspan></text>
+      </g>
+    </g>
+  </g>
+</svg>
