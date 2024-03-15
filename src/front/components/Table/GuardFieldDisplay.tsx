@@ -20,47 +20,48 @@ export function GuardFieldDisplay({ field, value }: GuardFieldDisplayProps) {
 	if (typeof value !== "string" && field instanceof GuardRelation) {
 		console.dir(value);
 		return (
-			<HoverCard position="top">
-				<HoverCard.Target>
-					<Center >
-						<IconLink color={"gray"}/>
-						<Text c={"gray"} ml={5}>
+			<Center>
+				<HoverCard position="top">
+					<HoverCard.Target>
+						<IconLink color={"gray"} />
+					</HoverCard.Target>
+					<HoverCard.Dropdown>
+						<Text fw={700}>リンクされたデータ</Text>
+						<table
+							className={css({
+								tableLayout: "fixed",
+								textAlign: "center",
+								borderCollapse: "collapse",
+							})}
+						>
+							<thead className={header}>
+								<tr>
+									{Object.entries(field.model.modelSchema).map(([k, v]) => (
+										<th key={k} className={cell}>
+											<Text>{v.attrs.label ?? k}</Text>
+										</th>
+									))}
+								</tr>
+							</thead>
+							<tbody>
+								<tr key={genSelectorId(value.ref)}>
+									{Object.entries(value?.value ?? {}).map(([k, v]) => (
+										<td key={k} className={dataCell}>
+											<Text style={{ textAlign: "center" }}>{v}</Text>
+										</td>
+									))}
+								</tr>
+							</tbody>
+						</table>
+					</HoverCard.Dropdown>
+				</HoverCard>
+			
+				<Text c={"gray"} ml={5}>
 							{Object.entries(value.ref)
 								.map(([k, v]) => `${field.model.modelSchema[k].attrs.label ?? k}:${v}`)
 								.join(",")}
 						</Text>
-					</Center>
-				</HoverCard.Target>
-				<HoverCard.Dropdown>
-					<Text fw={700}>リンクされたデータ</Text>
-					<table
-						className={css({
-							tableLayout: "fixed",
-							textAlign: "center",
-							borderCollapse: "collapse",
-						})}
-					>
-						<thead className={header}>
-							<tr>
-								{Object.entries(field.model.modelSchema).map(([k, v]) => (
-									<th key={k} className={cell}>
-										<Text>{v.attrs.label ?? k}</Text>
-									</th>
-								))}
-							</tr>
-						</thead>
-						<tbody>
-							<tr key={genSelectorId(value.ref)}>
-								{Object.entries(value?.value ?? {}).map(([k, v]) => (
-									<td key={k} className={dataCell}>
-										<Text style={{ textAlign: "center" }}>{v}</Text>
-									</td>
-								))}
-							</tr>
-						</tbody>
-					</table>
-				</HoverCard.Dropdown>
-			</HoverCard>
+			</Center>
 		);
 	}
 	if (typeof value === "string" && field instanceof GuardBool) {

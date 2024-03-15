@@ -3,13 +3,15 @@ import { renderToString } from "react-dom/server";
 import api from "./api/index";
 import { initAuthConfig } from "@hono/auth-js";
 import Keycloak from "@auth/core/providers/keycloak";
+import { routeTree } from "./routeTree.gen";
+import { FileRoutesByPath } from "@tanstack/react-router";
 const app = new Hono();
 app.use(
 	"*",
 	initAuthConfig((c) => {
-		c.res.headers.set("x-forwarded-host", process.env.AUTH_URL??"");
+		c.res.headers.set("x-forwarded-host", process.env.AUTH_URL ?? "");
 		//c.res.headers["x-forwarded-host"] = process.env.AUTH_URL
-		return ({
+		return {
 			secret: process.env.AUTH_SECRET,
 			providers: [
 				Keycloak({
@@ -18,9 +20,10 @@ app.use(
 					issuer: process.env.KEYCLOAK_ISSUER,
 				}),
 			],
-		})
+		};
 	}),
 );
+
 
 
 app.route("/api", api);
@@ -48,4 +51,4 @@ app.route("/api", api);
 		),
 	);
 }); */
-export default  app
+export default app;

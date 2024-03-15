@@ -19,13 +19,14 @@ import { TableDataCell, cell } from "./TableDataCell";
 import { ActionCell } from "./ActionCell";
 import { GuardField, GuardRelation } from "@/library/guard/guard";
 import { useDisclosure } from "@mantine/hooks";
-import { Button, Popover, Text } from "@mantine/core";
+import { Button, HoverCard, Popover, Text } from "@mantine/core";
 import React from "react";
 import {
 	IconCaretDownFilled,
 	IconCaretUpDown,
 	IconCaretUpFilled,
 } from "@tabler/icons-react";
+import { RouteAnchor } from "../RouteAnchor";
 export const header = css({
 	position: "sticky",
 	top: 0,
@@ -337,11 +338,10 @@ type AxcelTableThProps = {
 	onSortChange: () => void;
 };
 const AxcelTableTh = React.memo(({ field, name, ...props }: AxcelTableThProps) => {
-	const [opened, { close, open }] = useDisclosure(false);
 	return (
 		<th className={cell}>
-			<Popover position="top" withArrow shadow="sm" opened={opened}>
-				<Popover.Target>
+			<HoverCard position="top" withArrow shadow="sm">
+				<HoverCard.Target>
 					<Button
 						leftSection={
 							props.sorted === "asc" ? (
@@ -358,12 +358,12 @@ const AxcelTableTh = React.memo(({ field, name, ...props }: AxcelTableThProps) =
 						color="black"
 						onClick={props.onSortChange}
 					>
-						<Text onMouseEnter={open} onMouseLeave={close}>
+						<Text>
 							{name}
 						</Text>
 					</Button>
-				</Popover.Target>
-				<Popover.Dropdown style={{ maxWidth: "16rem" }}>
+				</HoverCard.Target>
+				<HoverCard.Dropdown style={{ maxWidth: "16rem" }}>
 					<Text size="md" fw={700}>
 						{name}
 					</Text>
@@ -383,8 +383,14 @@ const AxcelTableTh = React.memo(({ field, name, ...props }: AxcelTableThProps) =
 								.join(", ")}
 						</>
 					)}
-				</Popover.Dropdown>
-			</Popover>
+					{field instanceof GuardRelation && (
+						<>
+							<Text>タイプ : リンク</Text>
+							<Text>リンク先 - <RouteAnchor to="/model/$name" params={{name:field.model.name}}>{field.model.dispName()}</RouteAnchor></Text>
+						</>
+					)}
+				</HoverCard.Dropdown>
+			</HoverCard>
 		</th>
 	);
 });
