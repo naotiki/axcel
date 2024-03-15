@@ -19,7 +19,7 @@ type ActionCellProps = {
 export function ActionCell(props: ActionCellProps) {
 	return (
 		<td className={actionCell}>
-			<Group gap={1}>
+			<Group gap={1} wrap={"nowrap"}>
 				<Checkbox
 					checked={props.selected}
 					onChange={(e) => {

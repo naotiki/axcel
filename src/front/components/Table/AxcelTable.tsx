@@ -12,24 +12,21 @@ import {
 	GuardModelOutputWithId,
 	GuardModelSelector,
 	GuardModelSort,
+	GuardRelationRefAny,
 } from "@/library/guard/GuardModel";
 import { GuardFieldDisplay } from "./GuardFieldDisplay";
 import { TableDataCell, cell } from "./TableDataCell";
 import { ActionCell } from "./ActionCell";
-import { GuardField } from "@/library/guard/guard";
+import { GuardField, GuardRelation } from "@/library/guard/guard";
 import { useDisclosure } from "@mantine/hooks";
-import { ActionIcon, Box, Button, Center, Group, Popover, Space, Text } from "@mantine/core";
+import { Button, Popover, Text } from "@mantine/core";
 import React from "react";
 import {
-	IconArrowUp,
-	IconArrowUpTail,
 	IconCaretDownFilled,
-	IconCaretUp,
 	IconCaretUpDown,
-	IconCaretUpDownFilled,
 	IconCaretUpFilled,
 } from "@tabler/icons-react";
-const header = css({
+export const header = css({
 	position: "sticky",
 	top: 0,
 	zIndex: 1,
@@ -57,8 +54,8 @@ export type AxcelTableProps<M extends GuardModelBase> = {
 	tableChangesRepo: TableChangesRepository<M>;
 	userRepo: UserRepository;
 	locked: boolean;
-	sort:GuardModelSort<M>
-	onSortChanged:(sort:GuardModelSort<M>)=>void
+	sort: GuardModelSort<M>;
+	onSortChanged: (sort: GuardModelSort<M>) => void;
 };
 export function AxcelTable<M extends GuardModelBase>({
 	model,
@@ -81,7 +78,7 @@ export function AxcelTable<M extends GuardModelBase>({
 				selectedCellId: undefined,
 			});
 		}
-	}, [locked,userRepo]);
+	}, [locked, userRepo]);
 	return (
 		<table
 			className={css({
@@ -101,15 +98,15 @@ export function AxcelTable<M extends GuardModelBase>({
 								name={value.attrs.label ?? key}
 								sorted={sort[key as GuardModelColumn<M>]}
 								onSortChange={(): void => {
-									const newSort = {...sort}
-									if(newSort[key as GuardModelColumn<M>] === "asc"){
-										newSort[key as GuardModelColumn<M>] = "desc"
-									}else if(newSort[key as GuardModelColumn<M>] === "desc"){
-										newSort[key as GuardModelColumn<M>] = undefined
-									}else{
-										newSort[key as GuardModelColumn<M>] = "asc"
+									const newSort = { ...sort };
+									if (newSort[key as GuardModelColumn<M>] === "asc") {
+										newSort[key as GuardModelColumn<M>] = "desc";
+									} else if (newSort[key as GuardModelColumn<M>] === "desc") {
+										newSort[key as GuardModelColumn<M>] = undefined;
+									} else {
+										newSort[key as GuardModelColumn<M>] = "asc";
 									}
-									onSortChanged(newSort)
+									onSortChanged(newSort);
 								}}
 							/>
 						);
@@ -151,7 +148,7 @@ export function AxcelTable<M extends GuardModelBase>({
 									column: key as GuardModelColumn<M>,
 								};
 								const value = o.data[key as GuardModelColumn<M>];
-								if (field._readonly) {
+								if (field instanceof GuardValue&&field._readonly) {
 									return (
 										<td className={readOnlyCell} key={key}>
 											<GuardFieldDisplay field={field} value={value?.toString()} />
@@ -163,12 +160,12 @@ export function AxcelTable<M extends GuardModelBase>({
 										? value
 										: changes.getValue(loc);
 								return (
-									<TableDataCell
+									<TableDataCell<M>
 										changed={changes === null ? null : changes.isChanged(loc)}
 										loc={loc}
 										key={key}
 										field={field}
-										value={v !== null && v !== undefined ? v.toString() : v}
+										value={(v instanceof Y.Text || v !== null && v !== undefined)&&!(v as GuardRelationRefAny)?.ref ? v.toString() : v}
 										selected={selectedCell && selectedCell === genCellId(loc) ? user?.user.color : undefined}
 										selectingUsers={users
 											.filter(
@@ -187,7 +184,11 @@ export function AxcelTable<M extends GuardModelBase>({
 										}}
 										onValueChanged={(v, old) => {
 											if (changes?.isChangedRow(loc.id) === "delete") return;
-											if (!field._isFreeEdit || v === undefined || v === null) {
+											if (
+												(field instanceof GuardValue && !field._isFreeEdit) ||
+												v === undefined ||
+												v === null || (v as GuardRelationRefAny)?.ref
+											) {
 												console.log("not free", v);
 												if (tableChangesRepo.update(loc, v) === false) {
 													tableChangesRepo.addChange(loc, {
@@ -254,7 +255,7 @@ export function AxcelTable<M extends GuardModelBase>({
 										column: key as GuardModelColumn<M>,
 									};
 									const value = addition[key as keyof M["modelSchema"]];
-									if (field._readonly) {
+									if (field instanceof GuardValue && field._readonly) {
 										return (
 											<td className={readOnlyCell} key={key}>
 												<GuardFieldDisplay field={field} value={value?.toString()} />
@@ -268,7 +269,7 @@ export function AxcelTable<M extends GuardModelBase>({
 											loc={loc}
 											key={key}
 											field={field}
-											value={v instanceof Y.Text || (v !== null && v !== undefined) ? v.toString() : v}
+											value={(v instanceof Y.Text || (v !== null && v !== undefined))&&!(v as GuardRelationRefAny).ref ? v.toString() : v}
 											selected={
 												selectedCell && selectedCell === genCellId(loc) ? user?.user.color : undefined
 											}
@@ -292,7 +293,11 @@ export function AxcelTable<M extends GuardModelBase>({
 												);
 											}}
 											onValueChanged={(v, old) => {
-												if (!field._isFreeEdit || v === undefined || v === null) {
+												if (
+													(field instanceof GuardValue && !field._isFreeEdit) ||
+													v === undefined ||
+													v === null ||(v as GuardRelationRefAny)?.ref
+												) {
 													console.log("not free", v);
 													if (tableChangesRepo.update(loc, v) === false) {
 														throw new Error("illigal");

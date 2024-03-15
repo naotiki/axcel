@@ -5,13 +5,24 @@ import { authHandler, verifyAuth } from "@hono/auth-js";
 import * as Y from "yjs";
 import a from "@/front/components/Table/TableDevTest";
 import { Prisma, PrismaClient } from "@prisma/client";
-import { GuardModelColumn, GuardModelOutput } from "@/library/guard/GuardModel";
+import {
+	GuardModelBase,
+	GuardModelColumn,
+	GuardModelOutput,
+	GuardRelationRef,
+	GuardRelationRefAny,
+	GuardSchema,
+} from "@/library/guard/GuardModel";
 import { WebsocketProvider } from "y-websocket";
 import { TableChangesRepository } from "@/front/repo/TableChangesRepository";
 import { Operation } from "@prisma/client/runtime/library";
 import { GuardValue } from "@/library/guard/GuardValue";
 import { GuardBool } from "@/library/guard/values/GuardBool";
 import { GuardNumbers } from "@/library/guard/values/GuardNumbers";
+import { GuardRelation } from "@/library/guard/guard";
+import { GuardDateTime } from "@/library/guard/values/GuardDateTime";
+import { WithAttributes } from "@/library/guard/WithAttributes";
+import { objectEntriesMap } from "@/objectUtils";
 const api = new Hono();
 
 api.use("/auth/*", authHandler());
@@ -80,18 +91,34 @@ const axcelPost = api.post(
 				//クソデカTODO リレーション/リレーション[]の検証
 			}
 		}
-		const trans = (key: GuardModelColumn<typeof model>, str: string | undefined | null) => {
-			const field = model.modelSchema[key];
-			if (str === undefined || str === null) return str;
+		const trans = <T extends GuardModelBase>(
+			key: GuardModelColumn<T>,
+			str: GuardRelationRefAny | string | undefined | null,
+			m?: T,
+		) => {
+			const field = (m ?? model).modelSchema[key];
+			if (str === undefined || str === null) return [key, str];
+			if (field instanceof GuardRelation) {
+				//return
+				const v = str as GuardRelationRefAny;
+				return Object.keys(field.fields).map((k, i) => [k, v.ref[field.relations[i]]])[0];
+				/* {
+					connect: Object.fromEntries(
+						Object.entries((str as GuardRelationRefAny).ref).map(([k, v]) => [k, trans(k, v,field.model)]),
+					),
+				}; */
+			}
 			if (field instanceof GuardBool) {
-				return Boolean(str.toLowerCase() === "true");
+				return [key, Boolean(str.toLowerCase() === "true")];
 			}
 			if (field instanceof GuardNumbers) {
-				return Number(str);
+				return [key, Number(str)];
 			}
-			return str;
+			if (field instanceof GuardDateTime) {
+				return [key, new Date(Date.parse(str))];
+			}
+			return [key, str];
 		};
-
 		try {
 			//無理やり
 			const modelClient = prisma[modelName as keyof PrismaClient] as unknown as {
@@ -99,14 +126,14 @@ const axcelPost = api.post(
 			};
 
 			const additionals = Object.values(changes.addtions).map((a) =>
-				Object.fromEntries(Object.entries(a).map(([k, v]) => [k, trans(k, v)])),
+				Object.fromEntries(Object.entries(a).map(([k, v]) => trans(k, v))),
 			);
-			const updates = Object.values(changes.changes).map((c) => ({
-				where: { ...c.__id },
-				data: {
-					[c.column]: trans(c.column, c.new),
-				},
-			}));
+			const updates = Object.values(changes.changes).map((c) => {
+				return {
+					where: { ...c.__id },
+					data: Object.fromEntries([trans(c.column, c.new)]),
+				};
+			});
 			const deletions = changes.deletions.map((d) => ({ where: d }));
 			const result = await await prisma.$transaction([
 				modelClient.createMany({ data: additionals }),
@@ -134,14 +161,11 @@ const axcelGet = api.get(
 		z.object({
 			model: z.string(),
 		}),
-	),zValidator(
-		"query",
-		z.any().optional(),
 	),
+	zValidator("query", z.any().optional()),
 	async (c) => {
-		
 		const { model: modelName } = c.req.valid("param");
-		const sort=c.req.valid("query");
+		const sort = c.req.valid("query");
 		const model = a.models.find((m) => m.name === modelName);
 		if (!model) {
 			return c.json({ success: false, error: "model not found" }, 404);
@@ -152,31 +176,60 @@ const axcelGet = api.get(
 				[A in Operation]: (...args: unknown[]) => Prisma.PrismaPromise<unknown>;
 			};
 			const order = sort || Object.fromEntries(model.getIdEntries().map(([k]) => [k, "asc"]));
-			
-			prisma.movie.findMany({
+
+			prisma.creator.findMany({
 				orderBy: {
 					id: "asc",
-					title:"asc",
 				},
+				include: {},
 			});
 			const result = (await modelClient.findMany({
-				orderBy: Object.entries(order).map(([k, v]) => ({[k]:v})),
+				orderBy: Object.entries(order).map(([k, v]) => ({ [k]: v })),
+				include: Object.values(model.modelSchema).some((v) => v instanceof GuardRelation)
+					? Object.fromEntries(
+							Object.entries(model.modelSchema)
+								.filter(([, v]) => v instanceof GuardRelation)
+								.map(([k]) => [k, true]),
+					  )
+					: undefined,
 			})) as GuardModelOutput<typeof model>[];
-			return c.json(result);
+
+			return c.json(
+				result.map((r) =>
+					objectEntriesMap(r, (k:string, v) => {
+						const relation = Object.entries(model.modelSchema).find(
+							([, f]) => f instanceof GuardRelation && f.fields[k],
+						);
+						const rData = Object.entries(model.modelSchema).find(
+							([k2, f]) => f instanceof GuardRelation && k2 === k,
+						);
+						return relation
+							? [
+									relation[0],
+									{
+										ref: Object.fromEntries(
+											(relation[1] as GuardRelation<string, GuardSchema>).model
+												.getIdEntries()
+												.map(([k2]) => [k2, v]),
+										),
+										value: r[relation[0]],
+									} as GuardRelationRefAny,
+							  ]
+							: rData
+							  ? []
+							  : [k, v];
+					}),
+				),
+			);
 		} catch (e: unknown) {
 			console.dir(e);
 			return c.json({ success: false, error: JSON.stringify(e) }, 500);
 		}
 	},
-)
+);
 
 export type AxcelPost = typeof axcelPost;
 export type AxcelGet = typeof axcelGet;
-
-
-
-
-
 
 export type TestZodType = typeof zodTest;
 const zodTest = api.get(

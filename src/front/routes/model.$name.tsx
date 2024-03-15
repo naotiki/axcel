@@ -20,12 +20,14 @@ function Model() {
 		return <></>;
 	}
 	return (
-		<Container size={"md"}>
-			<Title order={1}>{model.dispName()}</Title>
-			<Text>{model.attrs.description??""}</Text>
+		<>
+			<Container size={"lg"}>
+				<Title order={1}>{model.dispName()}</Title>
+				<Text>{model.attrs.description ?? ""}</Text>
+			</Container>
 			<Stack justify="center" align="center">
 				<AxcelTableView model={model} />
 			</Stack>
-		</Container>
+		</>
 	);
 }

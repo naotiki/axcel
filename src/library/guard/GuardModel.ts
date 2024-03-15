@@ -47,10 +47,14 @@ export class GuardModel<T extends string, S extends GuardSchema<T>> extends With
 		return values.map((v) => this.injectId(v));
 	}
 }
+
+
+
 export type GuardModelOutputWithId<T extends GuardModelBase> = {
 	__id: GuardModelSelector<T>;
 	data: GuardModelOutput<T>;
 }
+
 export type GuardModelSelector<T extends GuardModel<string, GuardSchema<string>>> = {
 	[K in keyof GuardModelOutput<T>]?: GuardModelOutput<T>[K];
 } & {
@@ -60,9 +64,11 @@ export type GuardModelSelector<T extends GuardModel<string, GuardSchema<string>>
 export type GuardSchema<T extends string = string> = { [_ in T]: GuardField };
 
 export type GuardModelBase = GuardModel<string, GuardSchema<string>>;
+
 export type GuardModelSort<T extends GuardModelBase>={
 	[K in GuardModelColumn<T>]?: SortType
 }
+
 export type GuardModelColumn<T extends GuardModelBase> = T extends GuardModel<string, infer S>
 	? keyof S
 	: never;
@@ -79,7 +85,7 @@ export type GuardRelationRef<
 > = T extends GuardRelation<string, infer S>
 	? {
 			ref: {
-				[K in keyof T["fields"]]: GuardFieldInfer<T["fields"][K]>;
+				[K in keyof S]?: GuardFieldInfer<S[K]>;
 			};
 			value?: GuardSchemaOutput<S>;
 	  }
@@ -91,7 +97,7 @@ export type GuardRelationRef<
 				value?: GuardSchemaOutput<S>;
 		  }[]
 	  : never;
-
+export type GuardRelationRefAny=GuardRelationRef<GuardRelation<string,GuardSchema>>
 /* export type GuardRelationRef<S extends GuardSchema> = {
 	_id: string;
 	value: GuardSchemaOutput<S>;

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Avatar, Popover, Text, Button, Group, Space } from "@mantine/core";
 import { User } from "../../repo/UserRepository";
-import { Changes, TableChangesRepository } from "../../repo/TableChangesRepository";
+import { Changes, MapValueType, TableChangesRepository } from "../../repo/TableChangesRepository";
 import { useDisclosure } from "@mantine/hooks";
 import { IconEdit, IconPlus, IconTrash } from "@tabler/icons-react";
 import { GuardModelBase } from "@/library/guard/GuardModel";
@@ -9,6 +9,8 @@ import { IconTextWithTooltip } from "./IconTextWithTooltip";
 import { hc } from "hono/client";
 import { AxcelPost } from "@/api";
 import { css } from "@emotion/css";
+import { GuardValue } from "@/library/guard/GuardValue";
+import { GuardRelation, GuardRelationList } from "@/library/guard/guard";
 
 type AxcelTableHeaderProps<M extends GuardModelBase> = {
 	model: M;
@@ -77,13 +79,20 @@ export function AxcelTableHeader<M extends GuardModelBase>({
 												.map((v) => v.new)
 										);
 									for (const value of strings) {
-										if (field.validate(value)) {
+										if (field instanceof GuardValue &&field.validate(value as string | null | undefined)) {
 											setShowValidationErrorText(true);
 											setTimeout(() => {
 												setShowValidationErrorText(false);
 											}, 5000);
 											props.onLockedChange(false);
 											return;
+										}
+										if(field instanceof GuardRelation){
+											//TODO
+											//throw new Error("Not implemented");
+										}
+										if (field instanceof GuardRelationList) {
+											throw new Error("Not implemented");
 										}
 									}
 								}

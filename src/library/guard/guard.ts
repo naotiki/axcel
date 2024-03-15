@@ -15,9 +15,11 @@ export enum PrismaType {
 	List = "List",
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+// biome-ignore lint/suspicious/noExplicitAny: これはしゃーない
 export type GuardValueAny = GuardValue<any>;
+
 export type GuardField = GuardValueAny | GuardRelation<string,GuardSchema<string>> | GuardRelationList<string,GuardSchema<string>>;
+
 export class GuardRelation<T extends string,S extends GuardSchema<T>> extends WithAttributes{
 	model: GuardModel<T, S>;
 	fields: Record<string, GuardValueAny>;

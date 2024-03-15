@@ -13,8 +13,7 @@ import { CellChangeType } from "../../repo/TableChangesRepository";
 import { GuardValue } from "../../../library/guard/GuardValue";
 import { useContextMenu } from "../ContextMenuProvider";
 import { useClipboard } from "@mantine/hooks";
-import { GuardModelBase } from "@/library/guard/GuardModel";
-import React from "react";
+import { GuardModelBase, GuardRelationRefAny } from "@/library/guard/GuardModel";
 import { GuardFieldInput } from "./GuardFieldInput";
 import { GuardFieldDisplay } from "./GuardFieldDisplay";
 import { EditingBadges } from "./EditingBadges";
@@ -22,10 +21,10 @@ import { ErrorMaker } from "./ErrorMarker";
 export const cell = css({
 	//padding: "0.25em",
 	width: "8em",
-	maxWidth: "8em",
+	//maxWidth: "8em",
 	border: "1px solid #bbbbbb",
 });
-const dataCell = css(cell, {
+export const dataCell = css(cell, {
 	overflow: "visible",
 	//backgroundColor: "#ffffff",
 });
@@ -47,7 +46,7 @@ type TableDataCellProps<M extends GuardModelBase> = {
 		name: string;
 		color: string;
 	}[];
-	onValueChanged: (v: string | null | undefined, old: string | null | undefined) => void;
+	onValueChanged: (v:GuardRelationRefAny| string | null | undefined, old: GuardRelationRefAny|string | null | undefined) => void;
 	onValueReset: () => void;
 	onSelected: (l: AbsoluteCellPosition<M>) => void;
 };
@@ -67,7 +66,7 @@ export function TableDataCell<M extends GuardModelBase>(props: TableDataCellProp
 						variant="outline"
 						color="subtle"
 						onClick={() => {
-							copy(props.value ?? "");
+							copy(typeof props.value !=="object"?props.value ?? "":"");
 							close();
 						}}
 					>
@@ -117,7 +116,6 @@ export function TableDataCell<M extends GuardModelBase>(props: TableDataCellProp
 						</Button>
 					)}
 				</Stack>
-				<Text>{JSON.stringify(props.value)}</Text>
 			</Paper>
 		),
 		() => props.onSelected?.(props.loc)

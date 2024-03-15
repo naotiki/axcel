@@ -1,5 +1,10 @@
 import { GuardGenerator as Axcel } from "../../../library/guard/GuardGenerator";
-import { GuardModelOutput, GuardModelColumn, GuardModelSelector, GuardModelBase } from "../../../library/guard/GuardModel";
+import {
+	GuardModelOutput,
+	GuardModelColumn,
+	GuardModelSelector,
+	GuardModelBase,
+} from "../../../library/guard/GuardModel";
 import { autoIncrement } from "../../../library/guard/ValueProviders";
 
 const a = new Axcel();
@@ -9,22 +14,22 @@ export type AbsoluteCellPosition<T extends GuardModelBase> = {
 	column: GuardModelColumn<T>;
 };
 
-
-
-export const mockModel = a.model("movie", {
-	id: a.int().id().default(autoIncrement).label("ID").axcelReadonly(),
-	title: a.string().label("タイトル").min(1),
-	status: a.enum("Status", ["Ok", "Limited", "Suspended"]).label("ステータス").enumLabels({
-		Ok: "公開",
-		Limited: "限定",
-		Suspended: "停止",
-	}),
-	category: a.string().label("カテゴリー"),
-	check: a.bool().label("チェック").optional(),
-	number: a.int().label("数値").optional().default(1),
-}).label("テスト").desc("テスト用のモデル");
+export const mockModel = a
+	.model("movie", {
+		id: a.int().id().default(autoIncrement).label("ID").axcelReadonly(),
+		title: a.string().label("タイトル").min(1),
+		status: a.enum("Status", ["Ok", "Limited", "Suspended"]).label("ステータス").enumLabels({
+			Ok: "公開",
+			Limited: "限定",
+			Suspended: "停止",
+		}),
+		category: a.string().label("カテゴリー"),
+		check: a.bool().label("チェック").optional(),
+		number: a.int().label("数値").optional().default(1),
+	})
+	.label("テスト")
+	.desc("テスト用のモデル");
 export type MockModel = GuardModelOutput<typeof mockModel>;
-
 
 export const creator = a.model("creator", {
 	id: a.int().id().default(autoIncrement).label("ID").axcelReadonly(),
@@ -64,6 +69,21 @@ export const language = a.model("language", {
 	),
 	funny: a.bool().anotate({ label: "楽しい", description: '関数宣言が"fun"かどうか' }),
 });
+type A = GuardModelOutput<typeof language>;
+const aa: A = {
+	id: 1,
+	name: "a",
+	firstRelease: new Date(),
+	latestVersion: "1.0",
+	latestRelease: new Date(),
+	website: "",
+	creator: {
+		ref: {
+			id: 1,
+		},
+	},
+	funny: true,
+};
 
 /* 
 export const mockModel2 = g.model("Movie", {

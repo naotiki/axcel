@@ -1,4 +1,5 @@
 import { css } from "@emotion/css";
+import { Box } from "@mantine/core";
 import { useClickOutside, useViewportSize } from "@mantine/hooks";
 import {
 	PropsWithChildren,
@@ -56,7 +57,7 @@ export function ContextMenuProvider({ children }: PropsWithChildren) {
 	useEffect(() => {
 		ctx.current.onOpen((x, y, element) => {
 			setMenu(
-				<div
+				<Box
 					className={css({
 						position: "absolute",
 						top: y,
@@ -65,7 +66,7 @@ export function ContextMenuProvider({ children }: PropsWithChildren) {
 					ref={ref}
 				>
 					{element(onClose)}
-				</div>,
+				</Box>,
 			);
 		});
 		return () => {

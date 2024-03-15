@@ -1,22 +1,114 @@
 import {
 	Center,
 	Checkbox,
+	Menu,
 	NativeSelect,
-	NumberInput, TextInput
+	NumberInput,
+	TextInput,
+	Text,
+	UnstyledButton,
+	Box,
+	Group,
 } from "@mantine/core";
 import { DatePickerInput, DateTimePicker } from "@mantine/dates";
-import { GuardField } from "../../../library/guard/guard";
+import { GuardField, GuardRelation, GuardRelationList } from "../../../library/guard/guard";
 import { GuardEnum } from "../../../library/guard/values/GuardEnum";
 import { GuardBool } from "../../../library/guard/values/GuardBool";
 import { GuardDateTime } from "../../../library/guard/values/GuardDateTime";
 import { GuardInt, GuardNumbers } from "../../../library/guard/values/GuardNumbers";
+import { GuardModelOutput, GuardModelOutputWithId, GuardRelationRefAny } from "@/library/guard/GuardModel";
+import { useEffect, useState } from "react";
+import { hc } from "hono/client";
+import { AxcelGet } from "@/api";
+import { genSelectorId } from "@/front/repo/TableChangesRepository";
+import { cell, dataCell } from "./TableDataCell";
+import { header } from "./AxcelTable";
+import { css } from "@emotion/css";
+import { GuardFieldDisplay } from "./GuardFieldDisplay";
+import { RouteAnchor } from "../RouteAnchor";
 
 type GuardFieldInputProps = {
 	field: GuardField;
-	value?: string;
-	onValueChange: (v: string) => void;
+	value?: string | GuardRelationRefAny;
+	onValueChange: (v: string | GuardRelationRefAny) => void;
 };
 export function GuardFieldInput({ field, value, ...props }: GuardFieldInputProps) {
+	if (field instanceof GuardRelationList) return <></>;
+	if (field instanceof GuardRelation) {
+		const [data, setData] = useState<GuardModelOutputWithId<typeof field.model>[]>([]);
+		const [opened, setOpened] = useState(true);
+		useEffect(() => {
+			hc<AxcelGet>(`${import.meta.env.BASE_URL}api`)
+				.axcel[":model"].$get({
+					param: { model: field.model.name },
+				})
+				.then(async (res) => {
+					const d = await res.json();
+					setData(field.model.injectIdList(d as GuardModelOutput<typeof field.model>[]));
+				});
+		}, [field]);
+		return (
+			<Menu shadow="md" opened={opened} onChange={setOpened}>
+				<Menu.Target>
+					<Box>
+						<GuardFieldDisplay field={field} value={value} />
+					</Box>
+				</Menu.Target>
+				<Menu.Dropdown p={20}>
+					<Group>
+						<Text fw={700}>データリンク</Text>
+						<Text> - </Text>
+						<Text><RouteAnchor to="/model/$name" params={{ name: field.model.name }}>{field.model.dispName()}</RouteAnchor> と関連付けます。</Text>
+					</Group>
+
+					<table
+						className={css({
+							tableLayout: "fixed",
+							textAlign: "center",
+							borderCollapse: "collapse",
+						})}
+					>
+						<thead className={header}>
+							<tr>
+								{Object.entries(field.model.modelSchema).map(([k, v]) => (
+									<th key={k} className={cell}>
+										<Text>{v.attrs.label ?? k}</Text>
+									</th>
+								))}
+							</tr>
+						</thead>
+						<tbody>
+							{data.map((d) => (
+								<UnstyledButton
+									component={"tr"}
+									key={genSelectorId(d.__id)}
+									className={css({
+										":hover": {
+											backgroundColor: "lightgray",
+										},
+									})}
+									onClick={() => {
+										console.log(d.__id, d.data);
+										props.onValueChange({
+											ref: d.__id,
+											value: d.data,
+										} as GuardRelationRefAny);
+										setOpened(false);
+									}}
+								>
+									{Object.entries(d.data).map(([k, v]) => (
+										<td key={k} className={dataCell}>
+											<Text style={{ textAlign: "center" }}>{v}</Text>
+										</td>
+									))}
+								</UnstyledButton>
+							))}
+						</tbody>
+					</table>
+				</Menu.Dropdown>
+			</Menu>
+		);
+	}
 	if (field instanceof GuardEnum) {
 		return (
 			<NativeSelect
@@ -29,7 +121,8 @@ export function GuardFieldInput({ field, value, ...props }: GuardFieldInputProps
 					label: label ?? value,
 				}))}
 				value={value}
-				onChange={(e) => props.onValueChange(e.currentTarget.value)} />
+				onChange={(e) => props.onValueChange(e.currentTarget.value)}
+			/>
 		);
 	}
 	if (field instanceof GuardBool) {
@@ -37,7 +130,8 @@ export function GuardFieldInput({ field, value, ...props }: GuardFieldInputProps
 			<Center>
 				<Checkbox
 					checked={value?.toLowerCase() === "true"}
-					onChange={(e) => props.onValueChange(e.currentTarget.checked.toString())} />
+					onChange={(e) => props.onValueChange(e.currentTarget.checked.toString())}
+				/>
 			</Center>
 		);
 	}
@@ -45,18 +139,20 @@ export function GuardFieldInput({ field, value, ...props }: GuardFieldInputProps
 		if (field.isDateOnly) {
 			return (
 				<DatePickerInput
-					valueFormat="YYYY年MM月DD日"
+					valueFormat="YYYY/MM/DD"
 					autoFocus
 					value={value ? new Date(value) : null}
-					onChange={(d) => props.onValueChange(d?.toLocaleDateString() ?? "")} />
+					onChange={(d) => props.onValueChange(d?.toLocaleDateString() ?? "")}
+				/>
 			);
 		}
 		return (
 			<DateTimePicker
-				valueFormat="YYYY年MM月DD日 HH:MM"
+				valueFormat="YYYY/MM/DD HH:mm"
 				autoFocus
 				value={value ? new Date(value) : null}
-				onChange={(d) => props.onValueChange(d?.toLocaleString() ?? "")} />
+				onChange={(d) => props.onValueChange(d?.toLocaleString() ?? "")}
+			/>
 		);
 	}
 
@@ -71,7 +167,8 @@ export function GuardFieldInput({ field, value, ...props }: GuardFieldInputProps
 				min={field.minValue}
 				max={field.maxValue}
 				allowDecimal={!(field instanceof GuardInt)}
-				onChange={(e) => props.onValueChange(e.toString())} />
+				onChange={(e) => props.onValueChange(e.toString())}
+			/>
 		);
 	}
 
@@ -81,6 +178,7 @@ export function GuardFieldInput({ field, value, ...props }: GuardFieldInputProps
 			size="100%"
 			variant="unstyled"
 			value={value}
-			onChange={(e) => props.onValueChange(e.currentTarget.value)} />
+			onChange={(e) => props.onValueChange(e.currentTarget.value)}
+		/>
 	);
 }

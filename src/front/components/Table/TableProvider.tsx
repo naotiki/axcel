@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { css } from "@emotion/css";
 import { v4 as uuidv4 } from "uuid";
-import { Box, Button, Stack, Loader, LoadingOverlay } from "@mantine/core";
+import { Box, Button, Stack, Loader, LoadingOverlay ,Container} from "@mantine/core";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { User, UserRepository } from "../../repo/UserRepository";
 import { getRandomColor } from "../../utils/Color";
-import { Changes, MapValueType, TableChangesRepository } from "../../repo/TableChangesRepository";
+import { Changes, TableMapType, TableChangesRepository } from "../../repo/TableChangesRepository";
 import { GuardValue } from "../../../library/guard/GuardValue";
 import { useShallowEffect } from "@mantine/hooks";
 import { IconTablePlus } from "@tabler/icons-react";
@@ -96,7 +96,7 @@ export function AxcelTableView<M extends GuardModelBase>({ model, ...props }: Ta
 		return () => {
 			tableChangesRepo.current?.removeCallback(callback);
 		};
-	}, [sort,tableChangesRepo.current]);
+	}, [sort, tableChangesRepo.current]);
 	if (!user || !users || !changes || !data || !tableChangesRepo.current || !userRepo.current)
 		return (
 			<Stack
@@ -111,21 +111,23 @@ export function AxcelTableView<M extends GuardModelBase>({ model, ...props }: Ta
 			</Stack>
 		);
 	return (
-		<Box maw={"100%"} pos={"relative"}>
+		<Box pos={"relative"}>
 			<LoadingOverlay visible={locked} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} />
-			<AxcelTableHeader
-				model={model}
-				changes={changes}
-				user={user}
-				users={users}
-				tableChangesRepo={tableChangesRepo.current}
-				locked={locked}
-				onLockedChange={(locked) => setLocked(locked)}
-			/>
+			<Container size={"md"}>
+				<AxcelTableHeader
+					model={model}
+					changes={changes}
+					user={user}
+					users={users}
+					tableChangesRepo={tableChangesRepo.current}
+					locked={locked}
+					onLockedChange={(locked) => setLocked(locked)}
+				/>
+			</Container>
 			<div
 				className={css({
-					overflowX: "visible",
-					maxWidth: "100%",
+					overflowX: "scroll",
+					maxWidth: "100vw",
 				})}
 			>
 				{
@@ -142,7 +144,9 @@ export function AxcelTableView<M extends GuardModelBase>({ model, ...props }: Ta
 						onSortChanged={(sort) => setSort(sort)}
 					/>
 				}
-				<Button
+				
+			</div>
+			<Button
 					fullWidth
 					my={10}
 					leftSection={<IconTablePlus />}
@@ -153,13 +157,12 @@ export function AxcelTableView<M extends GuardModelBase>({ model, ...props }: Ta
 								Object.entries(model.modelSchema).map(([key, field]) => {
 									return [key, field instanceof GuardValue && field._default ? undefined : null];
 								}),
-							) as { [K in keyof GuardModelInput<M>]: MapValueType },
+							) as { [K in keyof GuardModelInput<M>]: TableMapType },
 						);
 					}}
 				>
 					データを追加
 				</Button>
-			</div>
 		</Box>
 	);
 }

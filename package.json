@@ -2,7 +2,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun run-p dev:*",
-    "dev:vite":"vite",
+    "dev:vite": "vite",
     "dev:hono": "bun run --watch ./src/index.tsx",
     "dev:y-websocket": "PORT=1234 YPERSISTENCE=./y_db bunx y-websocket-server",
     "build": "vite build --mode client && vite build",
