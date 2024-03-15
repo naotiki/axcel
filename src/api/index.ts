@@ -19,7 +19,7 @@ import { GuardBool } from "@/library/guard/values/GuardBool";
 import { GuardNumbers } from "@/library/guard/values/GuardNumbers";
 import { GuardRelation } from "@/library/guard/guard";
 import { GuardDateTime } from "@/library/guard/values/GuardDateTime";
-import { objectEntriesMap } from "@/objectUtils";
+import { objectEntriesMap } from "@/utils/objectUtils";
 import { createBunWebSocket } from "hono/bun";
 import { upgradeWebSocket } from "..";
 import { axcel } from "@/axcelExport";

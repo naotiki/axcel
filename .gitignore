@@ -8,3 +8,4 @@ prisma/*
 .env**
 y_db/
 axcel
+src/a.schema.ts

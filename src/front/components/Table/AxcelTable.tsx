@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { css } from "@emotion/css";
-import * as Diff from "diff";
 import { AbsoluteCellPosition } from "@/AbsoluteCellPosition";
 import * as Y from "yjs";
 import { User, UserRepository } from "../../repo/UserRepository";
@@ -18,17 +17,15 @@ import { GuardFieldDisplay } from "./GuardFieldDisplay";
 import { TableDataCell, cell } from "./TableDataCell";
 import { ActionCell } from "./ActionCell";
 import { GuardField, GuardRelation } from "@/library/guard/guard";
-import { useDisclosure } from "@mantine/hooks";
-import { Button, HoverCard, Popover, Text } from "@mantine/core";
+import { Button, HoverCard, Text } from "@mantine/core";
 import React from "react";
 import {
 	IconCaretDownFilled,
 	IconCaretUpDown,
 	IconCaretUpFilled,
-	IconInfoCircle,
-	IconInfoSquare,
 } from "@tabler/icons-react";
 import { RouteAnchor } from "../RouteAnchor";
+import { yTextUpdate } from "@/utils/yTextUtils";
 export const header = css({
 	position: "sticky",
 	top: 0,
@@ -211,15 +208,8 @@ export function AxcelTable<M extends GuardModelBase>({
 												});
 												return;
 											}
-											let count = 0;
-											for (const part of Diff.diffChars(old ?? "", v)) {
-												if (part.added) {
-													yText.insert(count, part.value);
-												} else if (part.removed) {
-													yText.delete(count, part.value.length);
-												}
-												count += part.value.length;
-											}
+
+											yTextUpdate(yText, v, old ?? "");
 										}}
 									/>
 								);
@@ -312,15 +302,7 @@ export function AxcelTable<M extends GuardModelBase>({
 													tableChangesRepo.update(loc, new Y.Text(v));
 													return;
 												}
-												let count = 0;
-												for (const part of Diff.diffChars(old ?? "", v)) {
-													if (part.added) {
-														yText.insert(count, part.value);
-													} else if (part.removed) {
-														yText.delete(count, part.value.length);
-													}
-													count += part.value.length;
-												}
+												yTextUpdate(yText,  v, old ?? "");
 											}}
 										/>
 									);

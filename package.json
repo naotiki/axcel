@@ -8,7 +8,8 @@
     "build": "vite build",
     "__dev": "bun run --hot src/index.ts",
     "_dev": "bun run dev:y-websocket & vite",
-    "cli-build":"bun build ./src/library/guard/axcel-cli.ts --compile --outfile axcel",
+    "axcel": "bun run ./src/library/guard/axcel-cli.ts",
+    "db-reset":"prisma migrate reset",
     "pwa-assets": "pwa-assets-generator --preset minimal-2023 public/Logo.svg"
   },
   "dependencies": {
@@ -27,7 +28,7 @@
     "@tanstack/react-router": "^1.19.4",
     "commander": "^12.0.0",
     "dayjs": "^1.11.10",
-    "diff": "^5.2.0",
+    "fast-diff": "^1.3.0",
     "gradient-string": "^2.0.2",
     "hono": "^4.1.0",
     "react": "^18.2.0",
