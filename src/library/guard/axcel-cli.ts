@@ -22,7 +22,7 @@ program
   .option("-o, --output <output>", "Output Prisma Schema file")
   .action(async (schema, options) => {
 		
-    const axcelInst:Axcel|undefined = (await import(Bun.resolveSync(schema,import.meta.dir))).default
+    const axcelInst:Axcel|undefined = (await import(Bun.resolveSync(schema,process.cwd()))).default
 	
 		if (!axcelInst||axcelInst?.models?.length === 0) {
 			console.error(`❌️ Invalid ${axcel} schema file`);

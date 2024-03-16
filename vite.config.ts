@@ -24,7 +24,9 @@ export default defineConfig(({ mode }) => {
 		},
 		plugins: [
 			react(),
-			TanStackRouterVite(),
+			TanStackRouterVite({
+				
+			}),
 			tsconfigPaths(),
 			VitePWA({
 				devOptions:{

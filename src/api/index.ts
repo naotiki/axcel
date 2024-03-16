@@ -7,6 +7,7 @@ import { Prisma, PrismaClient } from "@prisma/client";
 import {
 	GuardModelBase,
 	GuardModelColumn,
+	GuardModelInput,
 	GuardModelOutput,
 	GuardRelationRefAny,
 	GuardSchema,
@@ -21,13 +22,13 @@ import { GuardRelation } from "@/library/guard/guard";
 import { GuardDateTime } from "@/library/guard/values/GuardDateTime";
 import { objectEntriesMap } from "@/utils/objectUtils";
 import { axcel } from "@/axcelExport";
+import { gValidator as gInputValidator } from "@/library/guard/hono/gValidator";
+import { group } from "@/a.schema";
 const api = new Hono();
-
 
 api.use("/auth/*", authHandler());
 
 api.use("/*", verifyAuth());
-
 
 api.get("/clock", (c) => {
 	return c.json({
@@ -36,6 +37,10 @@ api.get("/clock", (c) => {
 });
 
 const prisma = new PrismaClient();
+const modelClient = (model: GuardModelBase) =>
+	prisma[model.name as keyof PrismaClient] as unknown as {
+		[A in Operation]: (...args: unknown[]) => Prisma.PrismaPromise<unknown>;
+	};
 const axcelPost = api.post(
 	"/axcel/:model",
 	zValidator(
@@ -225,15 +230,5 @@ const axcelGet = api.get(
 export type AxcelPost = typeof axcelPost;
 export type AxcelGet = typeof axcelGet;
 
-export type TestZodType = typeof zodTest;
-const zodTest = api.get(
-	"/projects",
-	zValidator(
-		"json",
-		z.object({
-			body: z.string(),
-		}),
-	),
-);
 
 export default api;

@@ -4,7 +4,7 @@ import api from "./api/index";
 import { initAuthConfig, verifyAuth } from "@hono/auth-js";
 import Keycloak from "@auth/core/providers/keycloak";
 import { routeTree } from "./routeTree.gen";
-import { createBunWebSocket } from "hono/bun";
+import { createBunWebSocket, serveStatic } from "hono/bun";
 const app = new Hono();
 app.use(
 	"*",
@@ -27,7 +27,7 @@ app.use(
 
 
 app.route("/api", api);
-
+app.get("/*",serveStatic({root:"./dist"}))
 /* app.get("/*", (c) => {
 	return c.html(
 		renderToString(

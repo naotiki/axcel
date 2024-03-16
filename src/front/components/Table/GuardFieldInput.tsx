@@ -38,7 +38,7 @@ export function GuardFieldInput({ field, value, ...props }: GuardFieldInputProps
 		const [data, setData] = useState<GuardModelOutputWithId<typeof field.model>[]>([]);
 		const [opened, setOpened] = useState(true);
 		useEffect(() => {
-			hc<AxcelGet>(`${import.meta.env.BASE_URL}api`)
+			hc<AxcelGet>(`${import.meta.env.VITE_APP_URL}/api`)
 				.axcel[":model"].$get({
 					param: { model: field.model.name },
 				})

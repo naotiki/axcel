@@ -44,7 +44,7 @@ export function AxcelTableView<M extends GuardModelBase>({ model, ...props }: Ta
 	);
 	const fetch = async () => {
 		console.log(sort);
-		const res = await hc<AxcelGet>("http://localhost:8080/api").axcel[":model"].$get({
+		const res = await hc<AxcelGet>(`${import.meta.env.VITE_APP_URL}/api`).axcel[":model"].$get({
 			param: { model: model.name },
 			query: { ...sort },
 		});
@@ -57,7 +57,7 @@ export function AxcelTableView<M extends GuardModelBase>({ model, ...props }: Ta
 
 	useShallowEffect(() => {
 		const doc = new Y.Doc();
-		const wsProvider = new WebsocketProvider("ws://localhost:3000/api/yws", model.name, doc);
+		const wsProvider = new WebsocketProvider(`${import.meta.env.VITE_APP_WS}/api/yws`, model.name, doc);
 		wsProvider.on("status", (event: { status: "disconnected" | "connecting" | "connected" }) => {
 			if (event.status === "connected") {
 			}

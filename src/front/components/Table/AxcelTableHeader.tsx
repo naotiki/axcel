@@ -102,7 +102,7 @@ export function AxcelTableHeader<M extends GuardModelBase>({
 										}
 									}
 								}
-								const result = await hc<AxcelPost>("http://localhost:8080/api").axcel[":model"].$post({
+								const result = await hc<AxcelPost>(`${import.meta.env.VITE_APP_URL}/api`).axcel[":model"].$post({
 									param: {
 										model: model.name,
 									},

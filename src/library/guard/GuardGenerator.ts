@@ -3,7 +3,7 @@ import { GuardBool } from "./values/GuardBool";
 import { GuardDecimal, GuardFloat, GuardInt } from "./values/GuardNumbers";
 import { GuardEnum } from "./values/GuardEnum";
 import { GuardDateTime } from "./values/GuardDateTime";
-import { GuardModel, GuardModelBase, GuardSchema } from "./GuardModel";
+import { GuardModel, GuardModelBase, GuardModelColumn, GuardSchema } from "./GuardModel";
 import { GuardList } from "./values/GuardList";
 import { GuardValue } from "./GuardValue";
 import { BunFile } from "bun";
@@ -121,10 +121,10 @@ export class Axcel {
 	enum<S extends string, T extends [S, ...S[]]>(enumName: string, enumValues: T): GuardEnum<T[number]> {
 		return new GuardEnum<T[number]>(enumName, enumValues);
 	}
-	relation<T extends string, S extends GuardSchema<T>>(
-		model: GuardModel<T, S>,
+	relation<M extends GuardModelBase>(
+		model: M,
 		fields: Record<string, GuardValueAny>,
-		relations: T[],
+		relations: GuardModelColumn<M>[],
 	) {
 		return new GuardRelation(model, fields, relations);
 	}
