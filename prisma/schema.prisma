@@ -33,3 +33,13 @@ enum Status {
 	Suspended
 }
 
+model Devtest {
+	id    Int @id @default(autoincrement())
+	uuid    String @default(uuid())
+	date    DateTime
+	dateTime    DateTime
+	hasDefault    String @default("デフォルト値だよ")
+	check    Boolean
+	int    Int
+	float    Float
+}

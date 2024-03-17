@@ -6,6 +6,7 @@ import Keycloak from "@auth/core/providers/keycloak";
 import { routeTree } from "./routeTree.gen";
 import { createBunWebSocket, serveStatic } from "hono/bun";
 const app = new Hono();
+
 app.use(
 	"*",
 	initAuthConfig((c) => {
@@ -24,10 +25,8 @@ app.use(
 	}),
 );
 
-
-
 app.route("/api", api);
-app.get("/*",serveStatic({root:"./dist"}))
+
 /* app.get("/*", (c) => {
 	return c.html(
 		renderToString(
@@ -53,14 +52,14 @@ app.get("/*",serveStatic({root:"./dist"}))
 }); */
 export const { upgradeWebSocket, websocket } = createBunWebSocket();
 Bun.serve({
-  fetch: app.fetch,
-  websocket,
+	fetch: app.fetch,
+	websocket,
 });
 app.use("/api/yws/**", verifyAuth());
 app.get(
 	"/api/yws/**",
 	upgradeWebSocket((c) => {
-		const path=	c.req.path.replace("/api/yws/","");
+		const path = c.req.path.replace("/api/yws/", "");
 		let yWs: WebSocket | undefined = undefined;
 		return {
 			onOpen(evt, ws) {
@@ -75,7 +74,7 @@ app.get(
 			onMessage(event, ws) {
 				yWs?.send(event.data);
 			},
-			onClose: (e,ws) => {
+			onClose: (e, ws) => {
 				yWs?.close();
 			},
 		};

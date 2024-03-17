@@ -66,7 +66,9 @@ export class Axcel {
 						w.write(" @updatedAt");
 					} else if (field._default) {
 						if (typeof field._default !== "object") {
-							w.write(` @default(${field._default})`);
+							if (typeof field._default === "string") {
+								w.write(` @default("${field._default}")`);
+							} else w.write(` @default(${field._default})`);
 						} else {
 							w.write(` @default(${(field._default as DefaultValueProvider<GuardValueAny>).expression})`);
 						}

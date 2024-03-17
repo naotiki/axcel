@@ -4,6 +4,7 @@ import { defineConfig } from "vite";
 import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { VitePWA } from "vite-plugin-pwa";
+import { resolve } from "bun";
 export default defineConfig(({ mode }) => {
 	return {
 		server: {
@@ -14,11 +15,11 @@ export default defineConfig(({ mode }) => {
 					target: "http://localhost:3000",
 					changeOrigin: false,
 				},
-				"/yws": {
-					target: "ws://localhost:1234",
+				"/api/yws": {
+					target: "ws://localhost:3000",
 					changeOrigin: false,
 					ws: true,
-					rewrite: (path) => path.replace(/^\/yws/, ""),
+					//rewrite: (path) => path.replace(/^\/yws/, ""),
 				},
 			},
 		},

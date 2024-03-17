@@ -1,5 +1,5 @@
 import { Axcel } from "./library/guard/GuardGenerator";
-import { autoIncrement, now } from "./library/guard/ValueProviders";
+import { autoIncrement, now, uuid } from "./library/guard/ValueProviders";
 
 const a = new Axcel();
 
@@ -55,7 +55,16 @@ const group = a
 	.label("企画")
 	.desc("祇園祭20XXの企画一覧");
 
-
+a.model("devtest",{
+	id: a.int().id().default(autoIncrement).label("ID").axcelReadonly(),
+	uuid:a.string().default(uuid).axcelReadonly(),
+	date:a.dateTime().dateOnly().label("日付"),
+	dateTime:a.dateTime().label("日時"),
+	hasDefault:a.string().default("デフォルト値だよ").label("デフォルトあり"),
+	check:a.bool().label("チェック"),
+	int:a.int().label("整数"),
+	float:a.float().label("小数")
+}).label("すべての型").desc("すべての入力タイプが見れる場所")
 
 a.prismaHeader(`
 datasource db {
