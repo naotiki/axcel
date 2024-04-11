@@ -7,6 +7,7 @@ import { routeTree } from "./routeTree.gen";
 import { SessionProvider } from "@hono/auth-js/react";
 import { UserProvider } from "./front/components/UserProvider";
 import { ContextMenuProvider } from "./front/components/ContextMenuProvider";
+import { authProvider } from "./axcelExport";
 // Create a new router instance
 const router = createRouter({ routeTree });
 
@@ -17,9 +18,10 @@ declare module "@tanstack/react-router" {
 	}
 }
 function App() {
+	authProvider.AuthContextProvider
 	return (
 		<>
-			<SessionProvider>
+			<authProvider.AuthContextProvider>
 				<MantineProvider>
 					<UserProvider>
 						<ContextMenuProvider>
@@ -27,7 +29,7 @@ function App() {
 						</ContextMenuProvider>
 					</UserProvider>
 				</MantineProvider>
-			</SessionProvider>
+			</authProvider.AuthContextProvider>
 		</>
 	);
 }

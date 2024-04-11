@@ -1,7 +1,7 @@
 import { Button, Container, Flex, Space, Title, Text, Avatar, Group } from "@mantine/core";
 import { useUser } from "./UserProvider";
-import { signOut } from "@hono/auth-js/react";
 import { RouteAnchor } from "./RouteAnchor";
+import { authProvider } from "@/axcelExport";
 
 export function Header() {
 	const user = useUser();
@@ -28,7 +28,7 @@ export function Header() {
 					<Button
 						variant="outline"
 						onClick={() => {
-							signOut({ callbackUrl: `/api/auth/signin?callbackUrl=${location.href}` });
+							authProvider.signOut({ callbackUrl: `/api/auth/signin?callbackUrl=${location.href}` });
 						}}
 						color="red"
 					>

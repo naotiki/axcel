@@ -1,7 +1,7 @@
-import { User } from "@auth/core/types";
-import { signIn, useSession } from "@hono/auth-js/react";
 import { PropsWithChildren, createContext, useContext, useEffect, useState } from "react";
 import { Box, Center, Loader, Stack } from "@mantine/core";
+import { authProvider } from "@/axcelExport";
+import type { User } from "@/auth/AuthProvider";
 const UserContext = createContext<User | null>(null);
 
 export function useUser() {
@@ -9,12 +9,12 @@ export function useUser() {
 }
 
 export function UserProvider({ children }: PropsWithChildren) {
-	const { data: session, status } = useSession();
+	const { user, status } = authProvider.useUserBySession();
   const [statusText,setStatusText]=useState("読み込み中")
 	useEffect(() => {
 		if (status === "unauthenticated") {
       setStatusText("リダイレクト中")
-			signIn("keycloak");
+			authProvider.signIn();
 		}
 	}, [status]);
 	if (status !== "authenticated") {
@@ -27,5 +27,5 @@ export function UserProvider({ children }: PropsWithChildren) {
 				</Stack>
 		);
 	}
-	return <UserContext.Provider value={session.user ?? null}>{children}</UserContext.Provider>;
+	return <UserContext.Provider value={user ?? null}>{children}</UserContext.Provider>;
 }

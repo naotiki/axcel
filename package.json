@@ -7,12 +7,12 @@
     "dev:yws": "PORT=1234 YPERSISTENCE=./y_db bunx y-websocket-server",
     "build": "vite build",
     "start": "bun run-p start:*",
-    "start:hono":"bun run ./src/index.tsx",
-    "start:yws":"PORT=1234 YPERSISTENCE=./y_db bunx y-websocket-server",
+    "start:hono": "bun run ./src/index.tsx",
+    "start:yws": "PORT=1234 YPERSISTENCE=./y_db bunx y-websocket-server",
     "__dev": "bun run --hot src/index.ts",
     "_dev": "bun run dev:y-websocket & vite",
     "axcel": "bun run ./src/library/guard/axcel-cli.ts",
-    "db-reset":"prisma migrate reset",
+    "db-reset": "prisma migrate reset",
     "pwa-assets": "pwa-assets-generator --preset minimal-2023 public/Logo.svg"
   },
   "dependencies": {
@@ -42,7 +42,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.5.3",
+    "@biomejs/biome": "1.6.4",
     "@hono/vite-dev-server": "^0.8.0",
     "@tanstack/router-devtools": "^1.19.4",
     "@tanstack/router-vite-plugin": "^1.19.5",

@@ -21,14 +21,14 @@ import { GuardNumbers } from "@/library/guard/values/GuardNumbers";
 import { GuardRelation } from "@/library/guard/guard";
 import { GuardDateTime } from "@/library/guard/values/GuardDateTime";
 import { objectEntriesMap } from "@/utils/objectUtils";
-import { axcel } from "@/axcelExport";
+import { authProvider, axcel } from "@/axcelExport";
 import { gValidator as gInputValidator } from "@/library/guard/hono/gValidator";
 import { group } from "@/a.schema";
 const api = new Hono();
 
-api.use("/auth/*", authHandler());
+api.use("/auth/*", authProvider.authHandlerMiddleware());
 
-api.use("/*", verifyAuth());
+api.use("/*", authProvider.verifyAuthMiddleware());
 
 api.get("/clock", (c) => {
 	return c.json({

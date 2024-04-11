@@ -5,24 +5,12 @@ import { initAuthConfig, verifyAuth } from "@hono/auth-js";
 import Keycloak from "@auth/core/providers/keycloak";
 import { routeTree } from "./routeTree.gen";
 import { createBunWebSocket, serveStatic } from "hono/bun";
+import { authProvider } from "./axcelExport";
 const app = new Hono();
 
 app.use(
 	"*",
-	initAuthConfig((c) => {
-		c.res.headers.set("x-forwarded-host", process.env.AUTH_URL ?? "");
-		//c.res.headers["x-forwarded-host"] = process.env.AUTH_URL
-		return {
-			secret: process.env.AUTH_SECRET,
-			providers: [
-				Keycloak({
-					clientId: process.env.KEYCLOAK_CLIENT_ID,
-					clientSecret: process.env.KEYCLOAK_SECRET,
-					issuer: process.env.KEYCLOAK_ISSUER,
-				}),
-			],
-		};
-	}),
+	authProvider.initMiddleware(),
 );
 
 app.route("/api", api);
@@ -55,7 +43,7 @@ Bun.serve({
 	fetch: app.fetch,
 	websocket,
 });
-app.use("/api/yws/**", verifyAuth());
+app.use("/api/yws/**", authProvider.verifyAuthMiddleware());
 app.get(
 	"/api/yws/**",
 	upgradeWebSocket((c) => {
