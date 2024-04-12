@@ -1,16 +1,17 @@
-import type { ReactNode } from "@tanstack/react-router";
-import type { Context } from "hono";
 import type { MiddlewareHandler } from "hono/types";
-import { PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 
-export interface AuthProvider {
+export interface HonoAuthProvider {
   initMiddleware(): MiddlewareHandler;
   verifyAuthMiddleware(): MiddlewareHandler;
   authHandlerMiddleware(): MiddlewareHandler;
+}
+
+export interface ReactAuthProvider {
   signIn(): void;
   signOut(arg:{callbackUrl:string}): void;
   useUserBySession(): {user:User | null,status:"unauthenticated" | "authenticated" | "loading"};
-  AuthContextProvider: React.FC<{ children: ReactNode }>;
+  AuthContextProvider: React.FC<Required<PropsWithChildren>>;
 }
 
 export interface User {

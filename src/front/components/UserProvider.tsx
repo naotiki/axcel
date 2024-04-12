@@ -1,7 +1,7 @@
 import { PropsWithChildren, createContext, useContext, useEffect, useState } from "react";
 import { Box, Center, Loader, Stack } from "@mantine/core";
-import { authProvider } from "@/axcelExport";
 import type { User } from "@/auth/AuthProvider";
+import { authProvider } from "@/frontExport";
 const UserContext = createContext<User | null>(null);
 
 export function useUser() {

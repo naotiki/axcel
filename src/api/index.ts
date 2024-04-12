@@ -1,13 +1,11 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { authHandler, verifyAuth } from "@hono/auth-js";
 import * as Y from "yjs";
 import { Prisma, PrismaClient } from "@prisma/client";
 import {
 	GuardModelBase,
 	GuardModelColumn,
-	GuardModelInput,
 	GuardModelOutput,
 	GuardRelationRefAny,
 	GuardSchema,
@@ -21,9 +19,8 @@ import { GuardNumbers } from "@/library/guard/values/GuardNumbers";
 import { GuardRelation } from "@/library/guard/guard";
 import { GuardDateTime } from "@/library/guard/values/GuardDateTime";
 import { objectEntriesMap } from "@/utils/objectUtils";
-import { authProvider, axcel } from "@/axcelExport";
-import { gValidator as gInputValidator } from "@/library/guard/hono/gValidator";
-import { group } from "@/a.schema";
+import {  axcel } from "@/axcelExport";
+import { authProvider } from "@/honoExport";
 const api = new Hono();
 
 api.use("/auth/*", authProvider.authHandlerMiddleware());

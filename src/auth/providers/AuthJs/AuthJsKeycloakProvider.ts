@@ -1,22 +1,10 @@
-import type { FC, ReactNode } from "react";
-import type { AuthProvider, User } from "../AuthProvider";
-import { SessionProvider, signIn, signOut, useSession } from "@hono/auth-js/react";
+import type { HonoAuthProvider } from "../../AuthProvider";
 import type { MiddlewareHandler } from "hono";
 import { authHandler, initAuthConfig, verifyAuth } from "@hono/auth-js";
 import Keycloak from "@auth/core/providers/keycloak";
 
 
-export class AuthJsKeycloakProvider implements AuthProvider {
-  useUserBySession(): { user: User | null; status: "unauthenticated" | "authenticated" | "loading"; } {
-    const { data: session, status } = useSession();
-    return { user: (session?.user ?? null) as User | null, status };
-  }
-  signIn(): void {
-    signIn("keycloak");
-  }
-  signOut(option: { callbackUrl: string; }): void {
-    signOut(option);
-  }
+export class AuthJsKeycloakProvider implements HonoAuthProvider {
   initMiddleware(): MiddlewareHandler {
     return initAuthConfig((c) => {
       c.res.headers.set("x-forwarded-host", process.env.AUTH_URL ?? "");
@@ -39,6 +27,5 @@ export class AuthJsKeycloakProvider implements AuthProvider {
   authHandlerMiddleware(): MiddlewareHandler {
     return authHandler();
   }
-  AuthContextProvider: FC<{ children: ReactNode; }> = SessionProvider;
 
 }

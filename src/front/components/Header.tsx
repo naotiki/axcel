@@ -1,7 +1,7 @@
 import { Button, Container, Flex, Space, Title, Text, Avatar, Group } from "@mantine/core";
 import { useUser } from "./UserProvider";
 import { RouteAnchor } from "./RouteAnchor";
-import { authProvider } from "@/axcelExport";
+import { authProvider } from "@/frontExport";
 
 export function Header() {
 	const user = useUser();

@@ -1,5 +1,15 @@
 version: '3'
 services:
+  app:
+    build: .
+    container_name: axcel-app
+    volumes:
+      - ./y_db:/app/y_db
+    ports:
+      - 8080:8080
+    env_file:
+      - .env.local
+    
   db:
     image: postgres:15.3-alpine
     container_name: axcel-db

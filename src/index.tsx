@@ -1,11 +1,7 @@
 import { Hono } from "hono";
-import { renderToString } from "react-dom/server";
 import api from "./api/index";
-import { initAuthConfig, verifyAuth } from "@hono/auth-js";
-import Keycloak from "@auth/core/providers/keycloak";
-import { routeTree } from "./routeTree.gen";
-import { createBunWebSocket, serveStatic } from "hono/bun";
-import { authProvider } from "./axcelExport";
+import { createBunWebSocket } from "hono/bun";
+import { authProvider } from "./honoExport";
 const app = new Hono();
 
 app.use(

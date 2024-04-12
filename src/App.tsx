@@ -4,10 +4,9 @@ import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
-import { SessionProvider } from "@hono/auth-js/react";
 import { UserProvider } from "./front/components/UserProvider";
 import { ContextMenuProvider } from "./front/components/ContextMenuProvider";
-import { authProvider } from "./axcelExport";
+import { authProvider } from "./frontExport";
 // Create a new router instance
 const router = createRouter({ routeTree });
 

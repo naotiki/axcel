@@ -1,12 +1,12 @@
 import type { FC, ReactNode } from "react";
-import type { AuthProvider, User } from "../AuthProvider";
-import type { Context, MiddlewareHandler } from "hono";
+import type { HonoAuthProvider, ReactAuthProvider, User } from "../AuthProvider";
+import type { MiddlewareHandler } from "hono";
 import React from "react";
 import { v4 as uuid } from "uuid";
 
 const emptyMiddleware: MiddlewareHandler = async (_ctx,next) => { await next() }
 
-export class MockProvider implements AuthProvider {
+export class MockProvider implements HonoAuthProvider,ReactAuthProvider {
   user: User | null = null
   useUserBySession(): { user: User | null; status: "unauthenticated" | "authenticated" | "loading"; } {
     return { user: this.user, status: this.user ? "authenticated" : "unauthenticated"};
