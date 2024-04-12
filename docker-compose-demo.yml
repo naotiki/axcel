@@ -13,8 +13,6 @@ services:
   db:
     image: postgres:15.3-alpine
     container_name: axcel-db
-    ports:
-      - "15432:5432"
     volumes:
       #- "./db_data/init:/docker-entrypoint-initdb.d"
       - "postgres_db:/var/lib/postgresql/data"
