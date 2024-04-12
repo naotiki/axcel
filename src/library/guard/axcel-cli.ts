@@ -2,7 +2,7 @@
 import { $ } from "bun";
 import { program } from "commander";
 import gradient from "gradient-string";
-import { Axcel } from "./GuardGenerator";
+import type { Axcel } from "./GuardGenerator";
 
 const axcel = gradient("red", "orange")("Axcel");
 const axcelCli = gradient("red", "orange")("Axcel CLI");

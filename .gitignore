@@ -9,3 +9,5 @@ prisma/*
 y_db/
 axcel
 src/a.schema.ts
+!prisma/.env.example
+!.env.example

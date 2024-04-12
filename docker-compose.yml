@@ -1,5 +1,15 @@
 version: '3'
 services:
+  app:
+    build: .
+    container_name: app
+    ports:
+      - 18080:8080
+    volumes:
+      - ./:/app
+    env_file:
+      - .env.local
+    
   db:
     image: postgres:15.3-alpine
     ports:
